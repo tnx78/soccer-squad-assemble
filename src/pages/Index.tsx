@@ -34,7 +34,7 @@ const mockMatches = [
 ];
 
 const Index = () => {
-  const [matches] = useState(mockMatches);
+  const [matches, setMatches] = useState(mockMatches);
   const { toast } = useToast();
 
   const handleSearch = (query: string) => {
@@ -43,6 +43,14 @@ const Index = () => {
   };
 
   const handleJoinMatch = (matchId: number) => {
+    setMatches(currentMatches =>
+      currentMatches.map(match =>
+        match.id === matchId
+          ? { ...match, players: match.players + 1 }
+          : match
+      )
+    );
+    
     toast({
       title: "Success!",
       description: "You've joined the match. Check your email for details.",
