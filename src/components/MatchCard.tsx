@@ -13,6 +13,8 @@ interface MatchCardProps {
 }
 
 export const MatchCard = ({ title, location, date, players, maxPlayers, onJoin }: MatchCardProps) => {
+  const isFull = players >= maxPlayers;
+
   return (
     <Card className="w-full animate-fade-in hover:shadow-lg transition-shadow">
       <CardContent className="pt-6">
@@ -33,9 +35,15 @@ export const MatchCard = ({ title, location, date, players, maxPlayers, onJoin }
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center">
-        <Badge variant="secondary">{maxPlayers - players} spots left</Badge>
-        <Button onClick={onJoin} className="bg-primary hover:bg-primary/90">
-          Join Match
+        <Badge variant="secondary">
+          {isFull ? "Match Full" : `${maxPlayers - players} spots left`}
+        </Badge>
+        <Button 
+          onClick={onJoin} 
+          disabled={isFull}
+          className="bg-primary hover:bg-primary/90 disabled:opacity-50"
+        >
+          {isFull ? "Match Full" : "Join Match"}
         </Button>
       </CardFooter>
     </Card>
