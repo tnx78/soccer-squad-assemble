@@ -12,7 +12,9 @@ const createMatchSchema = z.object({
   location: z.string().min(1, "Location is required"),
   date: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
-  maxPlayers: z.string().transform((val) => parseInt(val, 10)),
+  maxPlayers: z.string().transform((val) => parseInt(val, 10)).pipe(
+    z.number().min(2, "Minimum 2 players required")
+  ),
 });
 
 type CreateMatchForm = z.infer<typeof createMatchSchema>;
