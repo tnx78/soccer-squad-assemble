@@ -11,8 +11,11 @@ export interface Match {
   title: string;
   location: string;
   date: string;
+  startTime: string;
+  endTime: string;
   players: Player[];
   maxPlayers: number;
+  fee: number;
 }
 
 interface MatchListProps {
@@ -31,8 +34,11 @@ export const MatchList = ({ matches, currentUserId, onJoinMatch, onLeaveMatch }:
           title={match.title}
           location={match.location}
           date={match.date}
+          startTime={match.startTime}
+          endTime={match.endTime}
           players={match.players}
           maxPlayers={match.maxPlayers}
+          fee={match.fee}
           onJoin={() => onJoinMatch(match.id)}
           onLeave={() => onLeaveMatch(match.id)}
           hasJoined={currentUserId ? match.players.some(player => player.id === currentUserId) : false}

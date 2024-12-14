@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { supabase } from "@/lib/supabase";
+import { Facebook } from "lucide-react";
 
 const authSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -23,9 +25,28 @@ export const AuthDialog = () => {
     },
   });
 
-  const onSubmit = (data: AuthForm) => {
-    console.log("Auth data:", data);
-    // TODO: Implement actual authentication
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    
+    if (error) {
+      console.error("Social login error:", error);
+    }
+  };
+
+  const onSubmit = async (data: AuthForm) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+
+    if (error) {
+      console.error("Auth error:", error);
+    }
   };
 
   return (
@@ -69,20 +90,31 @@ export const AuthDialog = () => {
                     </FormItem>
                   )}
                 />
-                <div className="space-y-2">
-                  <Button type="submit" className="w-full">Login</Button>
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                    </div>
+                <Button type="submit" className="w-full">Login</Button>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" type="button">Google</Button>
-                    <Button variant="outline" type="button">Facebook</Button>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => handleSocialLogin('google')}
+                  >
+                    Google
+                  </Button>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => handleSocialLogin('facebook')}
+                  >
+                    <Facebook className="w-4 h-4 mr-2" />
+                    Facebook
+                  </Button>
                 </div>
               </form>
             </Form>
