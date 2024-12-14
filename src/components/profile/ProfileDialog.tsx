@@ -15,9 +15,7 @@ import { supabase } from "@/lib/supabase";
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   nickname: z.string().optional(),
-  age: z.string().transform((val) => parseInt(val, 10)).pipe(
-    z.number().min(16, "Must be at least 16 years old")
-  ),
+  age: z.coerce.number().min(16, "Must be at least 16 years old"),
   position: z.enum(["goalkeeper", "defender", "midfielder", "attacker"]),
 });
 
@@ -36,7 +34,7 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
     defaultValues: {
       name: "",
       nickname: "",
-      age: "",
+      age: 16,
       position: "midfielder",
     },
   });
