@@ -15,6 +15,9 @@ const createMatchSchema = z.object({
   maxPlayers: z.string().transform((val) => parseInt(val, 10)).pipe(
     z.number().min(2, "Minimum 2 players required")
   ),
+  fee: z.string().transform((val) => parseInt(val, 10)).pipe(
+    z.number().min(0, "Fee cannot be negative")
+  ),
 });
 
 type CreateMatchForm = z.infer<typeof createMatchSchema>;
@@ -32,6 +35,7 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
       date: "",
       time: "",
       maxPlayers: "",
+      fee: "",
     },
   });
 
@@ -105,6 +109,18 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
                   <FormLabel>Maximum Players</FormLabel>
                   <FormControl>
                     <Input type="number" min="2" placeholder="Enter max players" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="fee"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Match Fee (HUF)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" placeholder="Enter match fee" {...field} />
                   </FormControl>
                 </FormItem>
               )}
