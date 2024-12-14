@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
 // These values will be automatically injected by Lovable when connected to Supabase
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Supabase credentials not found. Please connect your Supabase project in Lovable.');
+}
+
 export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+  supabaseUrl || 'https://your-project.supabase.co',
+  supabaseAnonKey || 'your-anon-key'
 );
 
 // Helper to get user's profile
