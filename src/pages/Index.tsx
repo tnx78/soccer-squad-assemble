@@ -92,6 +92,34 @@ const Index = () => {
     });
   };
 
+  const handleCreateMatch = (data: any) => {
+    const newMatch: Match = {
+      id: matches.length + 1,
+      title: data.title,
+      location: data.location,
+      date: new Date(data.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      startTime: data.time,
+      endTime: calculateEndTime(data.time, parseInt(data.duration)),
+      players: [],
+      maxPlayers: data.maxPlayers,
+      fee: data.fee,
+    };
+    
+    setMatches(prev => [...prev, newMatch]);
+    toast({
+      title: "Match created successfully!",
+      description: "Your match has been added to the list.",
+    });
+  };
+
+  const calculateEndTime = (startTime: string, durationMinutes: number) => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes);
+    date.setMinutes(date.getMinutes() + durationMinutes);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
   const handleJoinMatch = (matchId: number) => {
     if (!user) {
       toast({
