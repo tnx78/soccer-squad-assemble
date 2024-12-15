@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Users, Clock } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, DollarSign } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +68,8 @@ export const MatchCard = ({
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             <span>{players.length}/{maxPlayers} players</span>
+            <DollarSign className="w-4 h-4 ml-2" />
+            <span>{fee.toLocaleString('hu-HU')} HUF</span>
           </div>
           <div className="flex items-center gap-2 mt-2">
             {players.map((player) => (
@@ -85,9 +87,6 @@ export const MatchCard = ({
                 </Tooltip>
               </TooltipProvider>
             ))}
-          </div>
-          <div className="text-sm font-semibold">
-            Match Fee: {fee.toLocaleString('hu-HU')} HUF
           </div>
         </div>
       </CardContent>

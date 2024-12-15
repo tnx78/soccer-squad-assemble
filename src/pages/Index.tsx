@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { CreateMatchDialog } from "@/components/matches/CreateMatchDialog";
 import { MatchList, Match } from "@/components/matches/MatchList";
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
+import { Button } from "@/components/ui/button";
+import { UserRound, LogOut } from "lucide-react";
 
-// Mock data for initial version
 const mockMatches: Match[] = [
   {
     id: 1,
@@ -38,10 +41,31 @@ const mockMatches: Match[] = [
 
 const Index = () => {
   const [matches, setMatches] = useState<Match[]>(mockMatches);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
-  
-  // Mock user ID for testing - this would come from auth context in real app
-  const currentUserId = "1";
+
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out successfully",
+    });
+  };
 
   const calculateEndTime = (startTime: string, duration: string) => {
     const [hours, minutes] = startTime.split(':').map(Number);
@@ -117,16 +141,36 @@ const Index = () => {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Soccer Matches</h1>
-          <div className="flex gap-2">
-            <AuthDialog />
-            <ProfileDialog user={null} />
-            <CreateMatchDialog onCreateMatch={handleCreateMatch} />
+          <div className="flex gap-2 items-center">
+            {user ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {}}
+                  className="rounded-full"
+                >
+                  <UserRound className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSignOut}
+                  className="rounded-full"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+                <CreateMatchDialog onCreateMatch={handleCreateMatch} />
+              </>
+            ) : (
+              <AuthDialog />
+            )}
           </div>
         </div>
         
         <MatchList
           matches={matches}
-          currentUserId={currentUserId}
+          currentUserId={user?.id}
           onJoinMatch={handleJoinMatch}
           onLeaveMatch={handleLeaveMatch}
         />
