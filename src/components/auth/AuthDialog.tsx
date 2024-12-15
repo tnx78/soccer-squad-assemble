@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/lib/supabase";
 import { Facebook, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const authSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -18,6 +19,7 @@ const authSchema = z.object({
 type AuthForm = z.infer<typeof authSchema>;
 
 export const AuthDialog = () => {
+  const [open, setOpen] = useState(false);
   const form = useForm<AuthForm>({
     resolver: zodResolver(authSchema),
     defaultValues: {
@@ -27,14 +29,17 @@ export const AuthDialog = () => {
   });
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      
+      if (error) throw error;
+      setOpen(false);
+    } catch (error: any) {
       toast.error("Login failed", { description: error.message });
     }
   };
@@ -42,19 +47,39 @@ export const AuthDialog = () => {
   const onSubmit = async (data: AuthForm, isRegister: boolean) => {
     try {
       if (isRegister) {
-        const { error } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
         });
-        if (error) throw error;
+        
+        if (signUpError) throw signUpError;
+
+        // Create profile entry
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: (await supabase.auth.getUser()).data.user?.id,
+              name: data.email.split('@')[0],
+            }
+          ]);
+
+        if (profileError) throw profileError;
+
         toast.success("Registration successful! Please check your email.");
+        setOpen(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password,
         });
+        
         if (error) throw error;
         toast.success("Login successful!");
+        setOpen(false);
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -62,7 +87,7 @@ export const AuthDialog = () => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">Login / Register</Button>
       </DialogTrigger>
@@ -87,6 +112,7 @@ export const AuthDialog = () => {
                       <FormControl>
                         <Input placeholder="Enter your email" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -99,6 +125,7 @@ export const AuthDialog = () => {
                       <FormControl>
                         <Input type="password" placeholder="Enter your password" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -165,6 +192,7 @@ export const AuthDialog = () => {
                       <FormControl>
                         <Input placeholder="Enter your email" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -177,6 +205,7 @@ export const AuthDialog = () => {
                       <FormControl>
                         <Input type="password" placeholder="Enter your password" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
