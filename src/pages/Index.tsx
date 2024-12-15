@@ -106,7 +106,7 @@ const Index = () => {
         match.id === matchId
           ? {
               ...match,
-              players: [...match.players, { id: currentUserId, name: "Current User", avatar: "/placeholder.svg" }]
+              players: [...match.players, { id: user?.id || '', name: "Current User", avatar: "/placeholder.svg" }]
             }
           : match
       )
@@ -124,7 +124,7 @@ const Index = () => {
         match.id === matchId
           ? {
               ...match,
-              players: match.players.filter(player => player.id !== currentUserId)
+              players: match.players.filter(player => player.id !== user?.id)
             }
           : match
       )
