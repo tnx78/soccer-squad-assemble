@@ -23,6 +23,7 @@ interface MatchCardProps {
   onJoin: () => void;
   onLeave: () => void;
   hasJoined: boolean;
+  isAuthenticated: boolean;
 }
 
 export const MatchCard = ({ 
@@ -36,7 +37,8 @@ export const MatchCard = ({
   fee,
   onJoin,
   onLeave,
-  hasJoined 
+  hasJoined,
+  isAuthenticated
 }: MatchCardProps) => {
   const isFull = players.length >= maxPlayers;
 
@@ -68,7 +70,9 @@ export const MatchCard = ({
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             <span>{players.length}/{maxPlayers} players</span>
-            <DollarSign className="w-4 h-4 ml-2" />
+          </div>
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4" />
             <span>{fee.toLocaleString('hu-HU')} HUF</span>
           </div>
           <div className="flex items-center gap-2 mt-2">
@@ -104,10 +108,10 @@ export const MatchCard = ({
         ) : (
           <Button 
             onClick={onJoin} 
-            disabled={isFull}
+            disabled={isFull || !isAuthenticated}
             className="bg-primary hover:bg-primary/90 disabled:opacity-50"
           >
-            {isFull ? "Match Full" : "Join Match"}
+            {!isAuthenticated ? "Login to Join" : isFull ? "Match Full" : "Join Match"}
           </Button>
         )}
       </CardFooter>

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/lib/supabase";
 import { Facebook, Mail } from "lucide-react";
+import { toast } from "sonner";
 
 const authSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -34,18 +35,29 @@ export const AuthDialog = () => {
     });
     
     if (error) {
-      console.error("Social login error:", error);
+      toast.error("Login failed", { description: error.message });
     }
   };
 
-  const onSubmit = async (data: AuthForm) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
-
-    if (error) {
-      console.error("Auth error:", error);
+  const onSubmit = async (data: AuthForm, isRegister: boolean) => {
+    try {
+      if (isRegister) {
+        const { error } = await supabase.auth.signUp({
+          email: data.email,
+          password: data.password,
+        });
+        if (error) throw error;
+        toast.success("Registration successful! Please check your email.");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        });
+        if (error) throw error;
+        toast.success("Login successful!");
+      }
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
@@ -65,7 +77,7 @@ export const AuthDialog = () => {
           </TabsList>
           <TabsContent value="login">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit((data) => onSubmit(data, false))} className="space-y-4">
                 <FormField
                   control={form.control}
                   name="email"
@@ -143,7 +155,7 @@ export const AuthDialog = () => {
           </TabsContent>
           <TabsContent value="register">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit((data) => onSubmit(data, true))} className="space-y-4">
                 <FormField
                   control={form.control}
                   name="email"

@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { UserRound, LogOut } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const mockMatches: Match[] = [
   {
@@ -42,23 +43,47 @@ const mockMatches: Match[] = [
 const Index = () => {
   const [matches, setMatches] = useState<Match[]>(mockMatches);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<{ avatar_url?: string; name?: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('avatar_url, name')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return;
+    }
+
+    setProfile(data);
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -67,46 +92,26 @@ const Index = () => {
     });
   };
 
-  const calculateEndTime = (startTime: string, duration: string) => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const durationMinutes = parseInt(duration);
-    
-    const totalMinutes = hours * 60 + minutes + durationMinutes;
-    const endHours = Math.floor(totalMinutes / 60) % 24;
-    const endMinutes = totalMinutes % 60;
-    
-    return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-  };
-
-  const handleCreateMatch = (data: any) => {
-    const endTime = calculateEndTime(data.time, data.duration);
-    
-    const newMatch: Match = {
-      id: matches.length + 1,
-      title: data.title,
-      location: data.location,
-      date: data.date,
-      startTime: data.time,
-      endTime: endTime,
-      players: [],
-      maxPlayers: Number(data.maxPlayers),
-      fee: Number(data.fee),
-    };
-
-    setMatches([...matches, newMatch]);
-    toast({
-      title: "Success!",
-      description: "Match created successfully.",
-    });
-  };
-
   const handleJoinMatch = (matchId: number) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please login to join matches",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setMatches(currentMatches =>
       currentMatches.map(match =>
         match.id === matchId
           ? {
               ...match,
-              players: [...match.players, { id: user?.id || '', name: "Current User", avatar: "/placeholder.svg" }]
+              players: [...match.players, { 
+                id: user.id, 
+                name: profile?.name || user.email?.split('@')[0] || "User", 
+                avatar: profile?.avatar_url 
+              }]
             }
           : match
       )
@@ -144,6 +149,15 @@ const Index = () => {
           <div className="flex gap-2 items-center">
             {user ? (
               <>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.avatar_url} />
+                    <AvatarFallback>{profile?.name?.[0] || user.email?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">
+                    {profile?.name || user.email?.split('@')[0]}
+                  </span>
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -173,6 +187,7 @@ const Index = () => {
           currentUserId={user?.id}
           onJoinMatch={handleJoinMatch}
           onLeaveMatch={handleLeaveMatch}
+          isAuthenticated={!!user}
         />
       </div>
     </div>

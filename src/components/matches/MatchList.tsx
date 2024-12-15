@@ -23,9 +23,10 @@ interface MatchListProps {
   currentUserId?: string;
   onJoinMatch: (matchId: number) => void;
   onLeaveMatch: (matchId: number) => void;
+  isAuthenticated: boolean;
 }
 
-export const MatchList = ({ matches, currentUserId, onJoinMatch, onLeaveMatch }: MatchListProps) => {
+export const MatchList = ({ matches, currentUserId, onJoinMatch, onLeaveMatch, isAuthenticated }: MatchListProps) => {
   return (
     <div className="space-y-4">
       {matches.map((match) => (
@@ -42,6 +43,7 @@ export const MatchList = ({ matches, currentUserId, onJoinMatch, onLeaveMatch }:
           onJoin={() => onJoinMatch(match.id)}
           onLeave={() => onLeaveMatch(match.id)}
           hasJoined={currentUserId ? match.players.some(player => player.id === currentUserId) : false}
+          isAuthenticated={isAuthenticated}
         />
       ))}
     </div>
