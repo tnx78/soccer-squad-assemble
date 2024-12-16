@@ -3,10 +3,11 @@ import { AuthDialog } from "@/components/auth/AuthDialog";
 import { CreateMatchDialog } from "@/components/matches/CreateMatchDialog";
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
 import { Button } from "@/components/ui/button";
-import { UserRound, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   user: User | null;
@@ -16,12 +17,23 @@ interface HeaderProps {
 
 export const Header = ({ user, profile, onCreateMatch }: HeaderProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
       title: "Signed out successfully",
     });
+    navigate('/');
   };
 
   return (
