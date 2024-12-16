@@ -32,7 +32,7 @@ export const useProfile = (user: User | null) => {
 
       if (error) throw error;
       setProfile(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading profile:', error);
       toast({
         title: "Error",
@@ -64,7 +64,7 @@ export const useProfile = (user: User | null) => {
       });
       
       await loadProfile();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
         title: "Error",

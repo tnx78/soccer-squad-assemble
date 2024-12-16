@@ -1,47 +1,13 @@
 import { useState, useEffect } from "react";
-import { AuthDialog } from "@/components/auth/AuthDialog";
-import { CreateMatchDialog } from "@/components/matches/CreateMatchDialog";
-import { MatchList, Match } from "@/components/matches/MatchList";
-import { ProfileDialog } from "@/components/profile/ProfileDialog";
+import { Match } from "@/components/matches/MatchList";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
-import { Button } from "@/components/ui/button";
-import { UserRound, LogOut } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const mockMatches: Match[] = [
-  {
-    id: 1,
-    title: "Sunday Friendly Match",
-    location: "Central Park Field",
-    date: "Sun, Mar 24",
-    startTime: "15:00",
-    endTime: "16:00",
-    players: [
-      { id: "1", name: "John Doe", avatar: "/placeholder.svg" },
-      { id: "2", name: "Jane Smith", avatar: "/placeholder.svg" }
-    ],
-    maxPlayers: 12,
-    fee: 5000,
-  },
-  {
-    id: 2,
-    title: "5-a-side Tournament",
-    location: "Sports Complex",
-    date: "Sat, Mar 23",
-    startTime: "14:00",
-    endTime: "15:30",
-    players: [
-      { id: "3", name: "Mike Johnson", avatar: "/placeholder.svg" }
-    ],
-    maxPlayers: 10,
-    fee: 3000,
-  },
-];
+import { Header } from "@/components/layout/Header";
+import { MatchList } from "@/components/matches/MatchList";
 
 const Index = () => {
-  const [matches, setMatches] = useState<Match[]>(mockMatches);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<{ avatar_url?: string; name?: string } | null>(null);
   const { toast } = useToast();
@@ -67,6 +33,9 @@ const Index = () => {
       }
     });
 
+    // Load matches
+    fetchMatches();
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -85,31 +54,81 @@ const Index = () => {
     setProfile(data);
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Signed out successfully",
-    });
+  const fetchMatches = async () => {
+    const { data, error } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        match_players (
+          player_id,
+          profiles (
+            name,
+            avatar_url
+          )
+        )
+      `)
+      .order('date', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching matches:', error);
+      toast({
+        title: "Error loading matches",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formattedMatches = data.map(match => ({
+      id: match.id,
+      title: match.title,
+      location: match.location,
+      date: new Date(match.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      startTime: match.start_time.slice(0, 5),
+      endTime: match.end_time.slice(0, 5),
+      players: match.match_players.map((mp: any) => ({
+        id: mp.player_id,
+        name: mp.profiles.name || 'Anonymous',
+        avatar: mp.profiles.avatar_url,
+      })),
+      maxPlayers: match.max_players,
+      fee: match.fee,
+    }));
+
+    setMatches(formattedMatches);
   };
 
-  const handleCreateMatch = (data: any) => {
-    const newMatch: Match = {
-      id: matches.length + 1,
-      title: data.title,
-      location: data.location,
-      date: new Date(data.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-      startTime: data.time,
-      endTime: calculateEndTime(data.time, parseInt(data.duration)),
-      players: [],
-      maxPlayers: data.maxPlayers,
-      fee: data.fee,
-    };
-    
-    setMatches(prev => [...prev, newMatch]);
+  const handleCreateMatch = async (data: any) => {
+    if (!user) return;
+
+    const { error: matchError } = await supabase
+      .from('matches')
+      .insert({
+        title: data.title,
+        location: data.location,
+        date: data.date,
+        start_time: data.time,
+        end_time: calculateEndTime(data.time, parseInt(data.duration)),
+        max_players: data.maxPlayers,
+        fee: data.fee,
+        created_by: user.id,
+      });
+
+    if (matchError) {
+      toast({
+        title: "Error creating match",
+        description: matchError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Match created successfully!",
       description: "Your match has been added to the list.",
     });
+
+    fetchMatches();
   };
 
   const calculateEndTime = (startTime: string, durationMinutes: number) => {
@@ -120,7 +139,7 @@ const Index = () => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
-  const handleJoinMatch = (matchId: number) => {
+  const handleJoinMatch = async (matchId: number) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -130,86 +149,64 @@ const Index = () => {
       return;
     }
 
-    setMatches(currentMatches =>
-      currentMatches.map(match =>
-        match.id === matchId
-          ? {
-              ...match,
-              players: [...match.players, { 
-                id: user.id, 
-                name: profile?.name || user.email?.split('@')[0] || "User", 
-                avatar: profile?.avatar_url 
-              }]
-            }
-          : match
-      )
-    );
-    
+    const { error } = await supabase
+      .from('match_players')
+      .insert({
+        match_id: matchId,
+        player_id: user.id,
+      });
+
+    if (error) {
+      toast({
+        title: "Error joining match",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Success!",
       description: "You've joined the match.",
     });
+
+    fetchMatches();
   };
 
-  const handleLeaveMatch = (matchId: number) => {
-    setMatches(currentMatches =>
-      currentMatches.map(match =>
-        match.id === matchId
-          ? {
-              ...match,
-              players: match.players.filter(player => player.id !== user?.id)
-            }
-          : match
-      )
-    );
-    
+  const handleLeaveMatch = async (matchId: number) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('match_players')
+      .delete()
+      .eq('match_id', matchId)
+      .eq('player_id', user.id);
+
+    if (error) {
+      toast({
+        title: "Error leaving match",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Success!",
       description: "You've left the match.",
     });
+
+    fetchMatches();
   };
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6">
       <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Soccer Matches</h1>
-          <div className="flex gap-2 items-center">
-            {user ? (
-              <>
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url} />
-                    <AvatarFallback>{profile?.name?.[0] || user.email?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">
-                    {profile?.name || user.email?.split('@')[0]}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {}}
-                  className="rounded-full"
-                >
-                  <UserRound className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleSignOut}
-                  className="rounded-full"
-                >
-                  <LogOut className="h-5 w-5" />
-                </Button>
-                <CreateMatchDialog onCreateMatch={handleCreateMatch} />
-              </>
-            ) : (
-              <AuthDialog />
-            )}
-          </div>
-        </div>
-        
+        <Header 
+          user={user} 
+          profile={profile} 
+          onCreateMatch={handleCreateMatch}
+        />
         <MatchList
           matches={matches}
           currentUserId={user?.id}
