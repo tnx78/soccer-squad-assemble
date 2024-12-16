@@ -11,11 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "./ProfileAvatar";
 
+const positions = ["goalkeeper", "defender", "midfielder", "attacker"] as const;
+type Position = typeof positions[number];
+
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   nickname: z.string().optional(),
   age: z.coerce.number().min(16, "Must be at least 16 years old"),
-  position: z.enum(["goalkeeper", "defender", "midfielder", "attacker"]),
+  position: z.enum(positions),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -33,7 +36,7 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
       name: profile?.name || "",
       nickname: profile?.nickname || "",
       age: profile?.age || 16,
-      position: profile?.position || "midfielder",
+      position: (profile?.position as Position) || "midfielder",
     },
   });
 
@@ -119,10 +122,11 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="goalkeeper">Goalkeeper</SelectItem>
-                      <SelectItem value="defender">Defender</SelectItem>
-                      <SelectItem value="midfielder">Midfielder</SelectItem>
-                      <SelectItem value="attacker">Attacker</SelectItem>
+                      {positions.map((pos) => (
+                        <SelectItem key={pos} value={pos}>
+                          {pos.charAt(0).toUpperCase() + pos.slice(1)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormItem>
