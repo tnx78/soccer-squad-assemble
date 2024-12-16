@@ -20,6 +20,8 @@ type AuthForm = z.infer<typeof authSchema>;
 
 export const AuthDialog = () => {
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
   const form = useForm<AuthForm>({
     resolver: zodResolver(authSchema),
     defaultValues: {
@@ -30,24 +32,39 @@ export const AuthDialog = () => {
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
       
       if (error) throw error;
-      setOpen(false);
+      if (!data.url) throw new Error("No redirect URL returned");
+      
+      // Redirect to the authentication URL
+      window.location.href = data.url;
     } catch (error: any) {
-      toast.error("Login failed", { description: error.message });
+      console.error("Social login error:", error);
+      toast.error("Login failed", { 
+        description: error.message || "Please try again later"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const onSubmit = async (data: AuthForm, isRegister: boolean) => {
     try {
+      setIsLoading(true);
+      
       if (isRegister) {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
           options: {
@@ -56,13 +73,14 @@ export const AuthDialog = () => {
         });
         
         if (signUpError) throw signUpError;
+        if (!signUpData.user?.id) throw new Error("No user ID returned");
 
         // Create profile entry
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
             {
-              id: (await supabase.auth.getUser()).data.user?.id,
+              id: signUpData.user.id,
               name: data.email.split('@')[0],
             }
           ]);
@@ -82,7 +100,10 @@ export const AuthDialog = () => {
         setOpen(false);
       }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Auth error:", error);
+      toast.error(error.message || "Authentication failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -129,9 +150,9 @@ export const AuthDialog = () => {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   <Mail className="w-4 h-4 mr-2" />
-                  Login with Email
+                  {isLoading ? "Please wait..." : "Login with Email"}
                 </Button>
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -145,6 +166,7 @@ export const AuthDialog = () => {
                   <Button
                     variant="outline"
                     type="button"
+                    disabled={isLoading}
                     onClick={() => handleSocialLogin('google')}
                     className="flex items-center justify-center gap-2"
                   >
@@ -171,6 +193,7 @@ export const AuthDialog = () => {
                   <Button
                     variant="outline"
                     type="button"
+                    disabled={isLoading}
                     onClick={() => handleSocialLogin('facebook')}
                   >
                     <Facebook className="w-4 h-4 mr-2" />
@@ -209,7 +232,9 @@ export const AuthDialog = () => {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">Register</Button>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Please wait..." : "Register"}
+                </Button>
               </form>
             </Form>
           </TabsContent>
