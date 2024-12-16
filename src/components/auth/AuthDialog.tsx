@@ -30,13 +30,18 @@ export const AuthDialog = () => {
     },
   });
 
+  const getRedirectUrl = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/auth/callback`;
+  };
+
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getRedirectUrl(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -47,7 +52,6 @@ export const AuthDialog = () => {
       if (error) throw error;
       if (!data.url) throw new Error("No redirect URL returned");
       
-      // Redirect to the authentication URL
       window.location.href = data.url;
     } catch (error: any) {
       console.error("Social login error:", error);
@@ -68,7 +72,7 @@ export const AuthDialog = () => {
           email: data.email,
           password: data.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: getRedirectUrl(),
           },
         });
         
