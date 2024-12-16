@@ -1,16 +1,15 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { User } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useProfile } from "@/hooks/useProfile";
+import { ProfileAvatar } from "./ProfileAvatar";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -26,114 +25,24 @@ interface ProfileDialogProps {
 }
 
 export const ProfileDialog = ({ user }: ProfileDialogProps) => {
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { profile, loading, updateProfile } = useProfile(user);
   
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: "",
-      nickname: "",
-      age: 16,
-      position: "midfielder",
+      name: profile?.name || "",
+      nickname: profile?.nickname || "",
+      age: profile?.age || 16,
+      position: profile?.position || "midfielder",
     },
   });
 
-  useEffect(() => {
-    if (user) {
-      loadProfile();
-    }
-  }, [user]);
-
-  const loadProfile = async () => {
-    if (!user) return;
-    
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (profile) {
-      form.reset({
-        name: profile.name,
-        nickname: profile.nickname,
-        age: profile.age.toString(),
-        position: profile.position,
-      });
-      setAvatarUrl(profile.avatar_url);
-    }
-  };
-
   const onSubmit = async (data: ProfileForm) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          name: data.name,
-          nickname: data.nickname,
-          age: data.age,
-          position: data.position,
-          updated_at: new Date().toISOString(),
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
-    }
+    await updateProfile(data);
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      if (!event.target.files || !event.target.files[0]) return;
-      
-      const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user?.id}/avatar.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      setAvatarUrl(publicUrl);
-
-      await supabase
-        .from('profiles')
-        .upsert({
-          id: user?.id,
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString(),
-        });
-
-      toast({
-        title: "Success",
-        description: "Avatar updated successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to upload avatar",
-        variant: "destructive",
-      });
-    }
+  const handleAvatarUpdate = async (url: string) => {
+    await updateProfile({ avatar_url: url });
   };
 
   return (
@@ -141,7 +50,7 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
       <DialogTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar>
-            <AvatarImage src={avatarUrl || ""} />
+            <AvatarImage src={profile?.avatar_url || ""} />
             <AvatarFallback>
               {user?.email?.charAt(0).toUpperCase()}
             </AvatarFallback>
@@ -152,20 +61,13 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center gap-4 py-4">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={avatarUrl || ""} />
-            <AvatarFallback>
-              {user?.email?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarUpload}
-            className="max-w-[200px]"
-          />
-        </div>
+        
+        <ProfileAvatar 
+          user={user}
+          avatarUrl={profile?.avatar_url || null}
+          onAvatarUpdate={handleAvatarUpdate}
+        />
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
