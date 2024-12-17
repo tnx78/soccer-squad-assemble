@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   user: User | null;
@@ -15,15 +14,15 @@ interface HeaderProps {
 }
 
 export const Header = ({ user, profile, onCreateMatch }: HeaderProps) => {
-  const navigate = useNavigate();
-
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
       toast.success("Signed out successfully");
-      window.location.href = '/'; // Force a full page reload
+      // Clear local storage and reload the page
+      localStorage.clear();
+      window.location.href = '/';
     } catch (error: any) {
       console.error('Error signing out:', error);
       toast.error("Error signing out", {

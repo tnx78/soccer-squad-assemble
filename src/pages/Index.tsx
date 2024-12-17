@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { MatchList } from "@/components/matches/MatchList";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -10,7 +9,6 @@ import { useMatches } from "@/hooks/useMatches";
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<{ avatar_url?: string; name?: string } | null>(null);
-  const navigate = useNavigate();
   const { matches, createMatch, joinMatch, leaveMatch, deleteMatch } = useMatches();
   const { toast } = useToast();
 
@@ -28,9 +26,11 @@ const Index = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log("Auth state changed:", _event, session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
+      if (currentUser) {
+        await fetchProfile(currentUser.id);
       } else {
         setProfile(null);
       }
