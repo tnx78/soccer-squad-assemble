@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 interface Player {
   id: string;
@@ -47,9 +49,17 @@ export const MatchCard = ({
   hasJoined,
   isAuthenticated
 }: MatchCardProps) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const isFull = players.length >= maxPlayers;
-  const currentUser = supabase.auth.getUser();
-  const isOwner = currentUser && createdBy === currentUser.data?.user?.id;
+  const isOwner = currentUser && createdBy === currentUser.id;
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    getCurrentUser();
+  }, []);
 
   return (
     <Card className="w-full animate-fade-in hover:shadow-lg transition-shadow">
