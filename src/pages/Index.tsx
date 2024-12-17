@@ -12,8 +12,10 @@ const Index = () => {
   const [profile, setProfile] = useState<{ avatar_url?: string; name?: string } | null>(null);
   const navigate = useNavigate();
   const { matches, createMatch, joinMatch, leaveMatch, deleteMatch } = useMatches();
+  const { toast } = useToast();
 
   useEffect(() => {
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -21,9 +23,11 @@ const Index = () => {
       }
     });
 
+    // Subscribe to auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("Auth state changed:", _event, session);
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchProfile(session.user.id);
@@ -36,30 +40,105 @@ const Index = () => {
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('avatar_url, name')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url, name')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
-      return;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch profile",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     }
+  };
 
-    setProfile(data);
+  const handleCreateMatch = async (data: any) => {
+    try {
+      const success = await createMatch(data);
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Match created successfully",
+        });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error creating match:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create match",
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
   const handleJoinMatch = async (matchId: string) => {
-    await joinMatch(matchId);
+    try {
+      await joinMatch(matchId);
+      toast({
+        title: "Success",
+        description: "Successfully joined the match",
+      });
+    } catch (error: any) {
+      console.error('Error joining match:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to join match",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLeaveMatch = async (matchId: string) => {
-    await leaveMatch(matchId);
+    try {
+      await leaveMatch(matchId);
+      toast({
+        title: "Success",
+        description: "Successfully left the match",
+      });
+    } catch (error: any) {
+      console.error('Error leaving match:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to leave match",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteMatch = async (matchId: string) => {
-    await deleteMatch(matchId);
+    try {
+      await deleteMatch(matchId);
+      toast({
+        title: "Success",
+        description: "Match deleted successfully",
+      });
+    } catch (error: any) {
+      console.error('Error deleting match:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete match",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -68,7 +147,7 @@ const Index = () => {
         <Header 
           user={user} 
           profile={profile} 
-          onCreateMatch={createMatch}
+          onCreateMatch={handleCreateMatch}
         />
         <MatchList
           matches={matches}

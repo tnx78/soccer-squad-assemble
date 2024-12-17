@@ -62,78 +62,49 @@ export const useMatches = () => {
 
   const createMatch = async (data: any) => {
     try {
-      await createMatchInDb(data);
-      
-      toast({
-        title: "Match created successfully!",
-        description: "Your match has been added to the list.",
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("You must be logged in to create a match");
 
+      await createMatchInDb({
+        ...data,
+        created_by: user.id
+      });
+      
+      await fetchMatches();
       return true;
     } catch (error: any) {
-      toast({
-        title: "Error creating match",
-        description: error.message,
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-
-  const deleteMatch = async (matchId: string) => {
-    try {
-      await deleteMatchFromDb(matchId);
-      
-      toast({
-        title: "Success!",
-        description: "Match deleted successfully.",
-      });
-      
-      fetchMatches();
-    } catch (error: any) {
-      toast({
-        title: "Error deleting match",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error('Error creating match:', error);
+      throw error;
     }
   };
 
   const joinMatch = async (matchId: string) => {
     try {
       await joinMatchMutation(matchId);
-      
-      toast({
-        title: "Success!",
-        description: "You've joined the match.",
-      });
-      
-      fetchMatches();
+      await fetchMatches();
     } catch (error: any) {
-      toast({
-        title: "Error joining match",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error('Error joining match:', error);
+      throw error;
     }
   };
 
   const leaveMatch = async (matchId: string) => {
     try {
       await leaveMatchMutation(matchId);
-      
-      toast({
-        title: "Success!",
-        description: "You've left the match.",
-      });
-      
-      fetchMatches();
+      await fetchMatches();
     } catch (error: any) {
-      toast({
-        title: "Error leaving match",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error('Error leaving match:', error);
+      throw error;
+    }
+  };
+
+  const deleteMatch = async (matchId: string) => {
+    try {
+      await deleteMatchFromDb(matchId);
+      await fetchMatches();
+    } catch (error: any) {
+      console.error('Error deleting match:', error);
+      throw error;
     }
   };
 

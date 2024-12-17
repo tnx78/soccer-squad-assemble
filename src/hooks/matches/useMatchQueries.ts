@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { Match } from '@/types/match';
 
 export const fetchMatchesWithPlayers = async () => {
   const { data: matchesData, error: matchesError } = await supabase
@@ -12,7 +11,11 @@ export const fetchMatchesWithPlayers = async () => {
     `)
     .order('date', { ascending: true });
 
-  if (matchesError) throw matchesError;
+  if (matchesError) {
+    console.error('Error fetching matches:', matchesError);
+    throw matchesError;
+  }
+  
   return matchesData;
 };
 
@@ -24,7 +27,11 @@ export const fetchPlayerProfiles = async (playerIds: string[]) => {
     .select('id, name, avatar_url')
     .in('id', playerIds);
 
-  if (profilesError) throw profilesError;
+  if (profilesError) {
+    console.error('Error fetching profiles:', profilesError);
+    throw profilesError;
+  }
+  
   return profilesData;
 };
 
@@ -39,10 +46,13 @@ export const createMatchInDb = async (matchData: any) => {
       end_time: calculateEndTime(matchData.time, parseInt(matchData.duration)),
       max_players: matchData.maxPlayers,
       fee: matchData.fee,
-      created_by: (await supabase.auth.getUser()).data?.user?.id,
+      created_by: matchData.created_by,
     });
 
-  if (matchError) throw matchError;
+  if (matchError) {
+    console.error('Error creating match:', matchError);
+    throw matchError;
+  }
 };
 
 export const deleteMatchFromDb = async (matchId: string) => {
@@ -51,7 +61,10 @@ export const deleteMatchFromDb = async (matchId: string) => {
     .delete()
     .eq('id', matchId);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error deleting match:', error);
+    throw error;
+  }
 };
 
 const calculateEndTime = (startTime: string, durationMinutes: number) => {

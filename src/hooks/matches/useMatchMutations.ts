@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 export const useMatchMutations = () => {
   const joinMatch = async (matchId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Authentication required");
+    if (!user) throw new Error("You must be logged in to join a match");
 
     const { error } = await supabase
       .from('match_players')
@@ -12,7 +12,10 @@ export const useMatchMutations = () => {
         player_id: user.id,
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error joining match:', error);
+      throw new Error(error.message);
+    }
   };
 
   const leaveMatch = async (matchId: string) => {
@@ -25,7 +28,10 @@ export const useMatchMutations = () => {
       .eq('match_id', matchId)
       .eq('player_id', user.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error leaving match:', error);
+      throw new Error(error.message);
+    }
   };
 
   return {
