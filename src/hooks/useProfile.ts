@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export interface Profile {
   id: string;
@@ -15,7 +15,6 @@ export interface Profile {
 export const useProfile = (user: User | null) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   const loadProfile = async () => {
     try {
@@ -34,10 +33,8 @@ export const useProfile = (user: User | null) => {
       setProfile(data);
     } catch (error: any) {
       console.error('Error loading profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load profile",
-        variant: "destructive",
+      toast.error("Failed to load profile", {
+        description: error.message
       });
     } finally {
       setLoading(false);
@@ -57,20 +54,11 @@ export const useProfile = (user: User | null) => {
         });
 
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
       
       await loadProfile();
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
+      throw error;
     }
   };
 

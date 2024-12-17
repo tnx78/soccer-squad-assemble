@@ -149,7 +149,7 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full">
               Save Changes
             </Button>
           </form>
