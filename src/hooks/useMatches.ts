@@ -14,9 +14,11 @@ export const useMatches = () => {
         *,
         match_players (
           player_id,
-          profiles (
-            name,
-            avatar_url
+          player:player_id (
+            profiles (
+              name,
+              avatar_url
+            )
           )
         )
       `)
@@ -41,8 +43,8 @@ export const useMatches = () => {
       endTime: match.end_time.slice(0, 5),
       players: match.match_players.map((mp: any) => ({
         id: mp.player_id,
-        name: mp.profiles.name || 'Anonymous',
-        avatar: mp.profiles.avatar_url,
+        name: mp.player?.profiles?.name || 'Anonymous',
+        avatar: mp.player?.profiles?.avatar_url,
       })),
       maxPlayers: match.max_players,
       fee: match.fee,
