@@ -1,9 +1,10 @@
-import { Calendar, MapPin, Users, Clock, DollarSign } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, DollarSign, Trash2 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/lib/supabase";
 
 interface Player {
   id: string;
@@ -12,6 +13,7 @@ interface Player {
 }
 
 interface MatchCardProps {
+  id: string;
   title: string;
   location: string;
   date: string;
@@ -20,13 +22,16 @@ interface MatchCardProps {
   players: Player[];
   maxPlayers: number;
   fee: number;
+  createdBy: string;
   onJoin: () => void;
   onLeave: () => void;
+  onDelete: () => void;
   hasJoined: boolean;
   isAuthenticated: boolean;
 }
 
 export const MatchCard = ({ 
+  id,
   title, 
   location, 
   date,
@@ -35,17 +40,32 @@ export const MatchCard = ({
   players, 
   maxPlayers,
   fee,
+  createdBy,
   onJoin,
   onLeave,
+  onDelete,
   hasJoined,
   isAuthenticated
 }: MatchCardProps) => {
   const isFull = players.length >= maxPlayers;
+  const isOwner = createdBy === supabase.auth.getUser()?.data?.user?.id;
 
   return (
     <Card className="w-full animate-fade-in hover:shadow-lg transition-shadow">
       <CardContent className="pt-6">
-        <h3 className="font-semibold text-lg mb-2">{title}</h3>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-semibold text-lg">{title}</h3>
+          {isOwner && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onDelete}
+              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         <div className="space-y-2 text-sm text-gray-600">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />

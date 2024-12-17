@@ -3,8 +3,7 @@ import { AuthDialog } from "@/components/auth/AuthDialog";
 import { CreateMatchDialog } from "@/components/matches/CreateMatchDialog";
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 interface HeaderProps {
   user: User | null;
   profile: { avatar_url?: string; name?: string } | null;
-  onCreateMatch: (data: any) => void;
+  onCreateMatch: (data: any) => Promise<boolean>;
 }
 
 export const Header = ({ user, profile, onCreateMatch }: HeaderProps) => {
@@ -42,15 +41,9 @@ export const Header = ({ user, profile, onCreateMatch }: HeaderProps) => {
       <div className="flex gap-2 items-center">
         {user ? (
           <>
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={profile?.avatar_url} />
-                <AvatarFallback>{profile?.name?.[0] || user.email?.[0]}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium">
-                {profile?.name || user.email?.split('@')[0]}
-              </span>
-            </div>
+            <span className="text-sm font-medium">
+              {profile?.name || user.email?.split('@')[0]}
+            </span>
             <ProfileDialog user={user} />
             <Button
               variant="ghost"

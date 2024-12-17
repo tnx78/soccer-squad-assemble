@@ -1,46 +1,30 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
-import { Match } from '@/components/matches/MatchList';
+import { Match } from '@/types/match';
+import { fetchMatchesWithPlayers, fetchPlayerProfiles, createMatchInDb, deleteMatchFromDb } from './matches/useMatchQueries';
+import { useMatchMutations } from './matches/useMatchMutations';
+import { supabase } from '@/lib/supabase';
 
 export const useMatches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const { toast } = useToast();
+  const { joinMatch: joinMatchMutation, leaveMatch: leaveMatchMutation } = useMatchMutations();
 
   const fetchMatches = async () => {
     try {
-      // First, fetch matches with their players
-      const { data: matchesData, error: matchesError } = await supabase
-        .from('matches')
-        .select(`
-          *,
-          match_players (
-            player_id
-          )
-        `)
-        .order('date', { ascending: true });
-
-      if (matchesError) throw matchesError;
-
-      // Then, fetch profiles for all players
+      const matchesData = await fetchMatchesWithPlayers();
+      
       const playerIds = matchesData
         .flatMap(match => match.match_players)
         .map(mp => mp.player_id);
 
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, name, avatar_url')
-        .in('id', playerIds);
+      const profilesData = await fetchPlayerProfiles(playerIds);
 
-      if (profilesError) throw profilesError;
-
-      // Map profiles to a lookup object for easier access
       const profilesMap = profilesData.reduce((acc, profile) => {
         acc[profile.id] = profile;
         return acc;
       }, {} as Record<string, any>);
 
-      // Format matches with player information
       const formattedMatches = matchesData.map(match => ({
         id: match.id,
         title: match.title,
@@ -62,6 +46,7 @@ export const useMatches = () => {
         }),
         maxPlayers: match.max_players,
         fee: match.fee,
+        createdBy: match.created_by,
       }));
 
       setMatches(formattedMatches);
@@ -77,74 +62,52 @@ export const useMatches = () => {
 
   const createMatch = async (data: any) => {
     try {
-      const { error: matchError } = await supabase
-        .from('matches')
-        .insert({
-          title: data.title,
-          location: data.location,
-          date: data.date,
-          start_time: data.time,
-          end_time: calculateEndTime(data.time, parseInt(data.duration)),
-          max_players: data.maxPlayers,
-          fee: data.fee,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-        });
-
-      if (matchError) throw matchError;
-
+      await createMatchInDb(data);
+      
       toast({
         title: "Match created successfully!",
         description: "Your match has been added to the list.",
       });
 
-      fetchMatches();
+      return true; // Return true to indicate success
     } catch (error: any) {
       toast({
         title: "Error creating match",
         description: error.message,
         variant: "destructive",
       });
+      return false;
     }
   };
 
-  const calculateEndTime = (startTime: string, durationMinutes: number) => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const date = new Date();
-    date.setHours(hours, minutes);
-    date.setMinutes(date.getMinutes() + durationMinutes);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: false 
-    });
+  const deleteMatch = async (matchId: string) => {
+    try {
+      await deleteMatchFromDb(matchId);
+      
+      toast({
+        title: "Success!",
+        description: "Match deleted successfully.",
+      });
+      
+      fetchMatches();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting match",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const joinMatch = async (matchId: number) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please login to join matches",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      const { error } = await supabase
-        .from('match_players')
-        .insert({
-          match_id: matchId,
-          player_id: user.id,
-        });
-
-      if (error) throw error;
-
+      await joinMatchMutation(matchId);
+      
       toast({
         title: "Success!",
         description: "You've joined the match.",
       });
-
+      
       fetchMatches();
     } catch (error: any) {
       toast({
@@ -156,23 +119,14 @@ export const useMatches = () => {
   };
 
   const leaveMatch = async (matchId: number) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
     try {
-      const { error } = await supabase
-        .from('match_players')
-        .delete()
-        .eq('match_id', matchId)
-        .eq('player_id', user.id);
-
-      if (error) throw error;
-
+      await leaveMatchMutation(matchId);
+      
       toast({
         title: "Success!",
         description: "You've left the match.",
       });
-
+      
       fetchMatches();
     } catch (error: any) {
       toast({
@@ -186,7 +140,6 @@ export const useMatches = () => {
   useEffect(() => {
     fetchMatches();
 
-    // Subscribe to realtime changes
     const channel = supabase
       .channel('public:matches')
       .on(
@@ -212,5 +165,6 @@ export const useMatches = () => {
     createMatch,
     joinMatch,
     leaveMatch,
+    deleteMatch,
   };
 };
