@@ -23,7 +23,7 @@ export const Header = ({ user, profile, onCreateMatch }: HeaderProps) => {
       if (error) throw error;
       
       toast.success("Signed out successfully");
-      navigate('/');
+      window.location.href = '/'; // Force a full page reload
     } catch (error: any) {
       console.error('Error signing out:', error);
       toast.error("Error signing out", {

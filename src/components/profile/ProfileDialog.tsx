@@ -69,10 +69,10 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar>
-            <AvatarImage src={profile?.avatar_url || ""} />
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={profile?.avatar_url || ""} alt="Profile" />
             <AvatarFallback>
-              {user?.email?.charAt(0).toUpperCase()}
+              {profile?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </Button>

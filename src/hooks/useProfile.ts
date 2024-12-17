@@ -56,8 +56,12 @@ export const useProfile = (user: User | null) => {
       if (error) throw error;
       
       await loadProfile();
+      toast.success("Profile updated successfully");
     } catch (error: any) {
       console.error('Error updating profile:', error);
+      toast.error("Failed to update profile", {
+        description: error.message
+      });
       throw error;
     }
   };
