@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 export const useMatchMutations = () => {
-  const joinMatch = async (matchId: number) => {
+  const joinMatch = async (matchId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Authentication required");
 
@@ -15,7 +15,7 @@ export const useMatchMutations = () => {
     if (error) throw error;
   };
 
-  const leaveMatch = async (matchId: number) => {
+  const leaveMatch = async (matchId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 

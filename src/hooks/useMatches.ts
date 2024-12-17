@@ -69,7 +69,7 @@ export const useMatches = () => {
         description: "Your match has been added to the list.",
       });
 
-      return true; // Return true to indicate success
+      return true;
     } catch (error: any) {
       toast({
         title: "Error creating match",
@@ -99,7 +99,7 @@ export const useMatches = () => {
     }
   };
 
-  const joinMatch = async (matchId: number) => {
+  const joinMatch = async (matchId: string) => {
     try {
       await joinMatchMutation(matchId);
       
@@ -118,7 +118,7 @@ export const useMatches = () => {
     }
   };
 
-  const leaveMatch = async (matchId: number) => {
+  const leaveMatch = async (matchId: string) => {
     try {
       await leaveMatchMutation(matchId);
       
