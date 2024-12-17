@@ -1,4 +1,5 @@
 import { MatchCard } from "@/components/MatchCard";
+import { Match } from "@/types/match";
 
 interface Player {
   id: string;
@@ -6,32 +7,29 @@ interface Player {
   avatar?: string;
 }
 
-export interface Match {
-  id: number;
-  title: string;
-  location: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  players: Player[];
-  maxPlayers: number;
-  fee: number;
-}
-
 interface MatchListProps {
   matches: Match[];
   currentUserId?: string;
-  onJoinMatch: (matchId: number) => void;
-  onLeaveMatch: (matchId: number) => void;
+  onJoinMatch: (matchId: string) => void;
+  onLeaveMatch: (matchId: string) => void;
+  onDeleteMatch: (matchId: string) => void;
   isAuthenticated: boolean;
 }
 
-export const MatchList = ({ matches, currentUserId, onJoinMatch, onLeaveMatch, isAuthenticated }: MatchListProps) => {
+export const MatchList = ({ 
+  matches, 
+  currentUserId, 
+  onJoinMatch, 
+  onLeaveMatch,
+  onDeleteMatch,
+  isAuthenticated 
+}: MatchListProps) => {
   return (
     <div className="space-y-4">
       {matches.map((match) => (
         <MatchCard
           key={match.id}
+          id={match.id}
           title={match.title}
           location={match.location}
           date={match.date}
@@ -40,8 +38,10 @@ export const MatchList = ({ matches, currentUserId, onJoinMatch, onLeaveMatch, i
           players={match.players}
           maxPlayers={match.maxPlayers}
           fee={match.fee}
+          createdBy={match.createdBy}
           onJoin={() => onJoinMatch(match.id)}
           onLeave={() => onLeaveMatch(match.id)}
+          onDelete={() => onDeleteMatch(match.id)}
           hasJoined={currentUserId ? match.players.some(player => player.id === currentUserId) : false}
           isAuthenticated={isAuthenticated}
         />

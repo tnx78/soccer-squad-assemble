@@ -39,7 +39,7 @@ export const createMatchInDb = async (matchData: any) => {
       end_time: calculateEndTime(matchData.time, parseInt(matchData.duration)),
       max_players: matchData.maxPlayers,
       fee: matchData.fee,
-      created_by: (await supabase.auth.getUser()).data.user?.id,
+      created_by: (await supabase.auth.getUser()).data?.user?.id,
     });
 
   if (matchError) throw matchError;

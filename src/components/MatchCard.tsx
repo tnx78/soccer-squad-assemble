@@ -48,7 +48,8 @@ export const MatchCard = ({
   isAuthenticated
 }: MatchCardProps) => {
   const isFull = players.length >= maxPlayers;
-  const isOwner = createdBy === supabase.auth.getUser()?.data?.user?.id;
+  const currentUser = supabase.auth.getUser();
+  const isOwner = currentUser && createdBy === currentUser.data?.user?.id;
 
   return (
     <Card className="w-full animate-fade-in hover:shadow-lg transition-shadow">
