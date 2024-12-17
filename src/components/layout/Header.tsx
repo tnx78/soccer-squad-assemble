@@ -3,9 +3,9 @@ import { AuthDialog } from "@/components/auth/AuthDialog";
 import { CreateMatchDialog } from "@/components/matches/CreateMatchDialog";
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
@@ -15,24 +15,21 @@ interface HeaderProps {
 }
 
 export const Header = ({ user, profile, onCreateMatch }: HeaderProps) => {
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive",
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast.success("Signed out successfully");
+      navigate('/');
+    } catch (error: any) {
+      console.error('Error signing out:', error);
+      toast.error("Error signing out", {
+        description: error.message
       });
-      return;
     }
-    
-    toast({
-      title: "Signed out successfully",
-    });
-    navigate('/');
   };
 
   return (

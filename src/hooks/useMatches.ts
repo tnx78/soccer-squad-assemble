@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from "sonner";
 import { Match } from '@/types/match';
 import { fetchMatchesWithPlayers, fetchPlayerProfiles, createMatchInDb, deleteMatchFromDb } from './matches/useMatchQueries';
 import { useMatchMutations } from './matches/useMatchMutations';
@@ -7,7 +7,6 @@ import { supabase } from '@/lib/supabase';
 
 export const useMatches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
-  const { toast } = useToast();
   const { joinMatch: joinMatchMutation, leaveMatch: leaveMatchMutation } = useMatchMutations();
 
   const fetchMatches = async () => {
@@ -52,10 +51,8 @@ export const useMatches = () => {
       setMatches(formattedMatches);
     } catch (error: any) {
       console.error('Error fetching matches:', error);
-      toast({
-        title: "Error loading matches",
-        description: error.message,
-        variant: "destructive",
+      toast.error("Error loading matches", {
+        description: error.message
       });
     }
   };
@@ -74,7 +71,10 @@ export const useMatches = () => {
       return true;
     } catch (error: any) {
       console.error('Error creating match:', error);
-      throw error;
+      toast.error("Failed to create match", {
+        description: error.message
+      });
+      return false;
     }
   };
 

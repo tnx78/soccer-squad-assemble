@@ -10,6 +10,7 @@ import { User } from "@supabase/supabase-js";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "./ProfileAvatar";
+import { toast } from "sonner";
 
 const positions = ["goalkeeper", "defender", "midfielder", "attacker"] as const;
 type Position = typeof positions[number];
@@ -41,11 +42,27 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
   });
 
   const onSubmit = async (data: ProfileForm) => {
-    await updateProfile(data);
+    try {
+      await updateProfile(data);
+      toast.success("Profile updated successfully");
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error("Failed to update profile", {
+        description: error.message
+      });
+    }
   };
 
   const handleAvatarUpdate = async (url: string) => {
-    await updateProfile({ avatar_url: url });
+    try {
+      await updateProfile({ avatar_url: url });
+      toast.success("Avatar updated successfully");
+    } catch (error: any) {
+      console.error('Error updating avatar:', error);
+      toast.error("Failed to update avatar", {
+        description: error.message
+      });
+    }
   };
 
   return (
@@ -132,7 +149,9 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">Save Changes</Button>
+            <Button type="submit" className="w-full" disabled={loading}>
+              Save Changes
+            </Button>
           </form>
         </Form>
       </DialogContent>
