@@ -14,7 +14,7 @@ export const useMatches = () => {
         *,
         match_players (
           player_id,
-          profiles!match_players_player_id_fkey (
+          profiles (
             name,
             avatar_url
           )
