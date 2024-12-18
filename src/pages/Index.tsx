@@ -57,7 +57,6 @@ const Index = () => {
         return;
       }
 
-      console.log("Fetched profile:", data);
       setProfile(data);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -143,23 +142,21 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 px-4 py-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <Header 
           user={user} 
           profile={profile} 
           onCreateMatch={handleCreateMatch}
         />
-        <div className="px-4 py-6">
-          <MatchList
-            matches={matches}
-            currentUserId={user?.id}
-            onJoinMatch={handleJoinMatch}
-            onLeaveMatch={handleLeaveMatch}
-            onDeleteMatch={handleDeleteMatch}
-            isAuthenticated={!!user}
-          />
-        </div>
+        <MatchList
+          matches={matches}
+          currentUserId={user?.id}
+          onJoinMatch={handleJoinMatch}
+          onLeaveMatch={handleLeaveMatch}
+          onDeleteMatch={handleDeleteMatch}
+          isAuthenticated={!!user}
+        />
       </div>
     </div>
   );
