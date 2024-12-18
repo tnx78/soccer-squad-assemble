@@ -22,7 +22,7 @@ export const Header = ({ user, profile, onCreateMatch }: HeaderProps) => {
       
       // Clear local storage and force a page reload
       localStorage.clear();
-      window.location.href = '/';
+      window.location.reload();
     } catch (error: any) {
       console.error('Error signing out:', error);
       toast.error("Error signing out", {
@@ -37,20 +37,18 @@ export const Header = ({ user, profile, onCreateMatch }: HeaderProps) => {
       <div className="flex gap-4 items-center">
         {user ? (
           <>
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage 
-                  src={profile?.avatar_url || ''} 
-                  alt={profile?.name || user.email || 'Profile'} 
-                />
-                <AvatarFallback>
-                  {profile?.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium text-gray-700">
-                {profile?.name || user.email?.split('@')[0]}
-              </span>
-            </div>
+            <Avatar className="h-8 w-8">
+              <AvatarImage 
+                src={profile?.avatar_url || ''} 
+                alt={profile?.name || user.email || 'Profile'} 
+              />
+              <AvatarFallback>
+                {profile?.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium text-gray-700">
+              {profile?.name || user.email?.split('@')[0]}
+            </span>
             <ProfileDialog user={user} />
             <Button
               variant="ghost"
