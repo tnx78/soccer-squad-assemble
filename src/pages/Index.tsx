@@ -9,6 +9,7 @@ import { useMatches } from "@/hooks/useMatches";
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<{ avatar_url?: string; name?: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { matches, createMatch, joinMatch, leaveMatch, deleteMatch } = useMatches();
   const { toast } = useToast();
 
@@ -30,7 +31,6 @@ const Index = () => {
         return;
       }
 
-      console.log("Fetched profile:", data);
       setProfile(data);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -43,31 +43,45 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        fetchProfile(currentUser.id);
+    const initializeAuth = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Initial session check
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user ?? null;
+        
+        setUser(currentUser);
+        if (currentUser) {
+          await fetchProfile(currentUser.id);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Subscribe to auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("Auth state changed:", _event, session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      
-      if (currentUser) {
-        await fetchProfile(currentUser.id);
-      } else {
-        setProfile(null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        console.log("Auth state changed:", _event, session);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        
+        if (currentUser) {
+          await fetchProfile(currentUser.id);
+        } else {
+          setProfile(null);
+        }
       }
-    });
+    );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleCreateMatch = async (data: any) => {
@@ -142,6 +156,14 @@ const Index = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
