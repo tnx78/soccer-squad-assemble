@@ -10,7 +10,6 @@ import { User } from "@supabase/supabase-js";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "./ProfileAvatar";
-import { toast } from "sonner";
 
 const positions = ["goalkeeper", "defender", "midfielder", "attacker"] as const;
 type Position = typeof positions[number];
@@ -42,37 +41,21 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
   });
 
   const onSubmit = async (data: ProfileForm) => {
-    try {
-      await updateProfile(data);
-      toast.success("Profile updated successfully");
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      toast.error("Failed to update profile", {
-        description: error.message
-      });
-    }
+    await updateProfile(data);
   };
 
   const handleAvatarUpdate = async (url: string) => {
-    try {
-      await updateProfile({ avatar_url: url });
-      toast.success("Avatar updated successfully");
-    } catch (error: any) {
-      console.error('Error updating avatar:', error);
-      toast.error("Failed to update avatar", {
-        description: error.message
-      });
-    }
+    await updateProfile({ avatar_url: url });
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={profile?.avatar_url || ""} alt="Profile" />
+          <Avatar>
+            <AvatarImage src={profile?.avatar_url || ""} />
             <AvatarFallback>
-              {profile?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
+              {user?.email?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -149,9 +132,7 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
-              Save Changes
-            </Button>
+            <Button type="submit" className="w-full">Save Changes</Button>
           </form>
         </Form>
       </DialogContent>

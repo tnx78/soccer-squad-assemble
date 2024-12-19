@@ -9,100 +9,26 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      match_players: {
-        Row: {
-          joined_at: string
-          match_id: string
-          player_id: string
-        }
-        Insert: {
-          joined_at?: string
-          match_id: string
-          player_id: string
-        }
-        Update: {
-          joined_at?: string
-          match_id?: string
-          player_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "match_players_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      matches: {
-        Row: {
-          created_at: string
-          created_by: string
-          date: string
-          end_time: string
-          fee: number
-          id: string
-          location: string
-          max_players: number
-          start_time: string
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          date: string
-          end_time: string
-          fee: number
-          id?: string
-          location: string
-          max_players: number
-          start_time: string
-          title: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          date?: string
-          end_time?: string
-          fee?: number
-          id?: string
-          location?: string
-          max_players?: number
-          start_time?: string
-          title?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
-          age: number | null
           avatar_url: string | null
           created_at: string
           id: string
           name: string | null
-          nickname: string | null
-          position: string | null
           updated_at: string
         }
         Insert: {
-          age?: number | null
           avatar_url?: string | null
           created_at?: string
           id: string
           name?: string | null
-          nickname?: string | null
-          position?: string | null
           updated_at?: string
         }
         Update: {
-          age?: number | null
           avatar_url?: string | null
           created_at?: string
           id?: string
           name?: string | null
-          nickname?: string | null
-          position?: string | null
           updated_at?: string
         }
         Relationships: []

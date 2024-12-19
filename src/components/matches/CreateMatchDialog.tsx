@@ -7,7 +7,6 @@ import { Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 
 const createMatchSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -27,11 +26,10 @@ const createMatchSchema = z.object({
 type CreateMatchForm = z.infer<typeof createMatchSchema>;
 
 interface CreateMatchDialogProps {
-  onCreateMatch: (data: CreateMatchForm) => Promise<boolean>;
+  onCreateMatch: (data: CreateMatchForm) => void;
 }
 
 export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => {
-  const [open, setOpen] = useState(false);
   const form = useForm<CreateMatchForm>({
     resolver: zodResolver(createMatchSchema),
     defaultValues: {
@@ -44,14 +42,6 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
       fee: 0,
     },
   });
-
-  const handleSubmit = async (data: CreateMatchForm) => {
-    const success = await onCreateMatch(data);
-    if (success) {
-      setOpen(false);
-      form.reset();
-    }
-  };
 
   const generateTimeOptions = () => {
     const options = [];
@@ -66,7 +56,7 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog>
       <DialogTrigger asChild>
         <Button className="bg-primary hover:bg-primary/90">
           <Plus className="w-4 h-4 mr-2" />
@@ -78,7 +68,7 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
           <DialogTitle>Create New Match</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onCreateMatch)} className="space-y-4">
             <FormField
               control={form.control}
               name="title"

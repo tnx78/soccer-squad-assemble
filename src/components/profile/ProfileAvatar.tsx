@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 import { User } from "@supabase/supabase-js";
 
 interface ProfileAvatarProps {
@@ -13,14 +13,12 @@ interface ProfileAvatarProps {
 
 export const ProfileAvatar = ({ user, avatarUrl, onAvatarUpdate }: ProfileAvatarProps) => {
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
-      
-      if (!event.target.files || !event.target.files[0] || !user) {
-        throw new Error('No file selected');
-      }
+      if (!event.target.files || !event.target.files[0] || !user) return;
       
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
@@ -28,10 +26,7 @@ export const ProfileAvatar = ({ user, avatarUrl, onAvatarUpdate }: ProfileAvatar
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { 
-          upsert: true,
-          contentType: file.type 
-        });
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -40,10 +35,16 @@ export const ProfileAvatar = ({ user, avatarUrl, onAvatarUpdate }: ProfileAvatar
         .getPublicUrl(filePath);
 
       await onAvatarUpdate(publicUrl);
-    } catch (error: any) {
-      console.error('Error uploading avatar:', error);
-      toast.error("Failed to upload avatar", {
-        description: error.message
+
+      toast({
+        title: "Success",
+        description: "Avatar updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload avatar",
+        variant: "destructive",
       });
     } finally {
       setUploading(false);
