@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -19,6 +20,7 @@ export const useAuthState = () => {
       setProfile(data);
     } catch (error) {
       console.error('Error fetching profile:', error);
+      toast.error("Failed to load profile");
     }
   };
 
@@ -27,19 +29,16 @@ export const useAuthState = () => {
 
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('Session error:', error);
-          return;
-        }
-
         if (mounted) {
-          const currentUser = session?.user ?? null;
-          setUser(currentUser);
-          
-          if (currentUser) {
-            await fetchProfile(currentUser.id);
+          if (session?.user) {
+            setUser(session.user);
+            await fetchProfile(session.user.id);
+          } else {
+            setUser(null);
+            setProfile(null);
           }
         }
       } catch (error) {
@@ -53,23 +52,22 @@ export const useAuthState = () => {
 
     initializeAuth();
 
+    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
-        
         console.log("Auth state changed:", event, session);
-        const currentUser = session?.user ?? null;
         
-        if (mounted) {
-          setUser(currentUser);
-          setIsLoading(false);
-          
-          if (currentUser) {
-            await fetchProfile(currentUser.id);
-          } else {
-            setProfile(null);
-          }
+        if (!mounted) return;
+
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
         }
+        
+        setIsLoading(false);
       }
     );
 

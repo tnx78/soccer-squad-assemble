@@ -15,6 +15,11 @@ export const useMatches = () => {
       setIsLoading(true);
       const matchesData = await fetchMatchesWithPlayers();
       
+      if (!matchesData.length) {
+        setMatches([]);
+        return;
+      }
+
       const playerIds = matchesData
         .flatMap(match => match.match_players)
         .map(mp => mp.player_id);
