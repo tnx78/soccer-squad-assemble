@@ -1,105 +1,22 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { MatchList } from "@/components/matches/MatchList";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
 import { Header } from "@/components/layout/Header";
 import { useMatches } from "@/hooks/useMatches";
+import { useAuthState } from "@/hooks/useAuthState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 const Index = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ avatar_url?: string; name?: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { matches, createMatch, joinMatch, leaveMatch, deleteMatch } = useMatches();
   const { toast } = useToast();
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('avatar_url, name')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch profile",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setProfile(data);
-    } catch (error) {
-      console.error('Error in fetchProfile:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
-  };
-
-  useEffect(() => {
-    let mounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        if (!mounted) return;
-        setIsLoading(true);
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Session error:', error);
-          return;
-        }
-
-        if (mounted) {
-          const currentUser = session?.user ?? null;
-          setUser(currentUser);
-          
-          if (currentUser) {
-            await fetchProfile(currentUser.id);
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        
-        console.log("Auth state changed:", event, session);
-        const currentUser = session?.user ?? null;
-        
-        if (mounted) {
-          setUser(currentUser);
-          
-          if (currentUser) {
-            await fetchProfile(currentUser.id);
-          } else {
-            setProfile(null);
-          }
-        }
-      }
-    );
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+  const { user, isLoading: isAuthLoading, profile } = useAuthState();
+  const { 
+    matches, 
+    createMatch, 
+    joinMatch, 
+    leaveMatch, 
+    deleteMatch,
+    isLoading: isMatchesLoading 
+  } = useMatches();
 
   const handleCreateMatch = async (data: any) => {
     try {
@@ -174,12 +91,8 @@ const Index = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-      </div>
-    );
+  if (isAuthLoading) {
+    return <LoadingSpinner />;
   }
 
   return (
@@ -191,14 +104,18 @@ const Index = () => {
           onCreateMatch={handleCreateMatch}
         />
         <div className="px-4 py-6">
-          <MatchList
-            matches={matches}
-            currentUserId={user?.id}
-            onJoinMatch={handleJoinMatch}
-            onLeaveMatch={handleLeaveMatch}
-            onDeleteMatch={handleDeleteMatch}
-            isAuthenticated={!!user}
-          />
+          {isMatchesLoading ? (
+            <LoadingSpinner />
+          ) : (
+            <MatchList
+              matches={matches}
+              currentUserId={user?.id}
+              onJoinMatch={handleJoinMatch}
+              onLeaveMatch={handleLeaveMatch}
+              onDeleteMatch={handleDeleteMatch}
+              isAuthenticated={!!user}
+            />
+          )}
         </div>
       </div>
     </div>

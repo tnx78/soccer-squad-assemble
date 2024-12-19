@@ -7,10 +7,12 @@ import { supabase } from '@/lib/supabase';
 
 export const useMatches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { joinMatch: joinMatchMutation, leaveMatch: leaveMatchMutation } = useMatchMutations();
 
   const fetchMatches = async () => {
     try {
+      setIsLoading(true);
       const matchesData = await fetchMatchesWithPlayers();
       
       const playerIds = matchesData
@@ -54,6 +56,8 @@ export const useMatches = () => {
       toast.error("Error loading matches", {
         description: error.message
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -133,6 +137,7 @@ export const useMatches = () => {
 
   return {
     matches,
+    isLoading,
     createMatch,
     joinMatch,
     leaveMatch,
