@@ -29,11 +29,11 @@ const Index = () => {
         return true;
       }
       return false;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating match:', error);
       toast({
         title: "Error",
-        description: "Failed to create match",
+        description: error.message || "Failed to create match",
         variant: "destructive",
       });
       return false;

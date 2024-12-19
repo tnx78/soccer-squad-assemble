@@ -15,7 +15,8 @@ export const useMatches = () => {
       setIsLoading(true);
       const matchesData = await fetchMatchesWithPlayers();
       
-      if (!matchesData.length) {
+      // Initialize empty array if no matches
+      if (!matchesData || !matchesData.length) {
         setMatches([]);
         return;
       }
@@ -118,7 +119,15 @@ export const useMatches = () => {
   };
 
   useEffect(() => {
-    fetchMatches();
+    let mounted = true;
+
+    const loadInitialMatches = async () => {
+      if (mounted) {
+        await fetchMatches();
+      }
+    };
+
+    loadInitialMatches();
 
     const channel = supabase
       .channel('public:matches')
@@ -130,12 +139,15 @@ export const useMatches = () => {
           table: 'matches'
         },
         () => {
-          fetchMatches();
+          if (mounted) {
+            fetchMatches();
+          }
         }
       )
       .subscribe();
 
     return () => {
+      mounted = false;
       supabase.removeChannel(channel);
     };
   }, []);

@@ -14,7 +14,7 @@ export const useAuthState = () => {
         .from('profiles')
         .select('avatar_url, name')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setProfile(data);
@@ -29,7 +29,7 @@ export const useAuthState = () => {
 
     const initializeAuth = async () => {
       try {
-        // Get initial session
+        setIsLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted) {
@@ -43,6 +43,7 @@ export const useAuthState = () => {
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        toast.error("Failed to initialize authentication");
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -52,22 +53,30 @@ export const useAuthState = () => {
 
     initializeAuth();
 
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session);
         
         if (!mounted) return;
 
-        if (session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
-        } else {
-          setUser(null);
-          setProfile(null);
-        }
+        setIsLoading(true);
         
-        setIsLoading(false);
+        try {
+          if (session?.user) {
+            setUser(session.user);
+            await fetchProfile(session.user.id);
+          } else {
+            setUser(null);
+            setProfile(null);
+          }
+        } catch (error) {
+          console.error('Error handling auth change:', error);
+          toast.error("Failed to update authentication state");
+        } finally {
+          if (mounted) {
+            setIsLoading(false);
+          }
+        }
       }
     );
 
