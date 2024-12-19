@@ -12,6 +12,7 @@ export const useMatches = () => {
 
   const fetchMatches = async () => {
     try {
+      setIsLoading(true);
       const matchesData = await fetchMatchesWithPlayers();
       
       if (!matchesData) {

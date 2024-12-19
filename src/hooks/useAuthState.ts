@@ -39,11 +39,11 @@ export const useAuthState = () => {
             setUser(null);
             setProfile(null);
           }
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
         toast.error("Failed to initialize authentication");
-      } finally {
         if (mounted) {
           setIsLoading(false);
         }
