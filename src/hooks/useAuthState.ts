@@ -29,7 +29,6 @@ export const useAuthState = () => {
 
     const initializeAuth = async () => {
       try {
-        setIsLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted) {
@@ -55,12 +54,8 @@ export const useAuthState = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed:", event, session);
-        
         if (!mounted) return;
 
-        setIsLoading(true);
-        
         try {
           if (session?.user) {
             setUser(session.user);
@@ -72,10 +67,6 @@ export const useAuthState = () => {
         } catch (error) {
           console.error('Error handling auth change:', error);
           toast.error("Failed to update authentication state");
-        } finally {
-          if (mounted) {
-            setIsLoading(false);
-          }
         }
       }
     );

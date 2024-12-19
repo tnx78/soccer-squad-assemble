@@ -1,10 +1,9 @@
-import { useEffect } from "react";
-import { MatchList } from "@/components/matches/MatchList";
 import { useToast } from "@/components/ui/use-toast";
 import { Header } from "@/components/layout/Header";
 import { useMatches } from "@/hooks/useMatches";
 import { useAuthState } from "@/hooks/useAuthState";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { MatchList } from "@/components/matches/MatchList";
 
 const Index = () => {
   const { toast } = useToast();

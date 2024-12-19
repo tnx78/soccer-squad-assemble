@@ -12,12 +12,11 @@ export const useMatches = () => {
 
   const fetchMatches = async () => {
     try {
-      setIsLoading(true);
       const matchesData = await fetchMatchesWithPlayers();
       
-      // Initialize empty array if no matches
-      if (!matchesData || !matchesData.length) {
+      if (!matchesData) {
         setMatches([]);
+        setIsLoading(false);
         return;
       }
 
