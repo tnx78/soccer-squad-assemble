@@ -39,11 +39,11 @@ export const useAuthState = () => {
             setUser(null);
             setProfile(null);
           }
-          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
         toast.error("Failed to initialize authentication");
+      } finally {
         if (mounted) {
           setIsLoading(false);
         }
@@ -56,17 +56,12 @@ export const useAuthState = () => {
       async (event, session) => {
         if (!mounted) return;
 
-        try {
-          if (session?.user) {
-            setUser(session.user);
-            await fetchProfile(session.user.id);
-          } else {
-            setUser(null);
-            setProfile(null);
-          }
-        } catch (error) {
-          console.error('Error handling auth change:', error);
-          toast.error("Failed to update authentication state");
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
         }
       }
     );

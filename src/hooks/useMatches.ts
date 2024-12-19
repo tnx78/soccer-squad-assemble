@@ -12,12 +12,10 @@ export const useMatches = () => {
 
   const fetchMatches = async () => {
     try {
-      setIsLoading(true);
       const matchesData = await fetchMatchesWithPlayers();
       
       if (!matchesData) {
         setMatches([]);
-        setIsLoading(false);
         return;
       }
 
@@ -123,6 +121,7 @@ export const useMatches = () => {
 
     const loadInitialMatches = async () => {
       if (mounted) {
+        setIsLoading(true);
         await fetchMatches();
       }
     };
