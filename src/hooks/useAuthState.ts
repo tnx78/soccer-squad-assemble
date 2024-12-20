@@ -63,24 +63,12 @@ export const useAuthState = () => {
 
   const handleSignOut = async () => {
     try {
-      // First check if we have a session
-      const { data: { session } } = await supabase.auth.getSession();
-      
       // Clear local state immediately
       setUser(null);
       setProfile(null);
 
-      // If we have a session, attempt to sign out
-      if (session) {
-        const { error } = await supabase.auth.signOut({
-          scope: 'local' // Only sign out from current device
-        });
-        
-        if (error && !error.message.includes('session_not_found')) {
-          console.error('Error during sign out:', error);
-          return;
-        }
-      }
+      // Attempt to sign out without checking session
+      await supabase.auth.signOut();
       
       toast.success("Signed out successfully");
     } catch (error) {
