@@ -9,37 +9,55 @@ export const useMatches = () => {
 
   const fetchMatches = async () => {
     try {
-      const { data, error } = await supabase
+      // First, get all matches
+      const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
-        .select(`
-          *,
-          players:match_players(
-            player:profiles(id, name, nickname, avatar_url)
-          )
-        `)
+        .select('*')
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
 
-      if (error) throw error;
+      if (matchesError) throw matchesError;
 
-      const formattedMatches = data.map(match => ({
-        id: match.id,
-        title: match.title,
-        location: match.location,
-        date: new Date(match.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-        startTime: match.start_time.slice(0, 5),
-        endTime: match.end_time.slice(0, 5),
-        players: match.players.map((p: any) => ({
-          id: p.player.id,
-          name: p.player.nickname || p.player.name,
-          avatar: p.player.avatar_url,
-        })),
-        maxPlayers: match.max_players,
-        fee: match.fee,
-        createdBy: match.created_by,
-      }));
+      // Then, for each match, get its players
+      const matchesWithPlayers = await Promise.all(
+        matchesData.map(async (match) => {
+          const { data: playersData, error: playersError } = await supabase
+            .from('match_players')
+            .select(`
+              player_id,
+              profiles!match_players_player_id_fkey (
+                id,
+                name,
+                nickname,
+                avatar_url
+              )
+            `)
+            .eq('match_id', match.id);
 
-      setMatches(formattedMatches);
+          if (playersError) throw playersError;
+
+          const players = playersData.map(player => ({
+            id: player.profiles.id,
+            name: player.profiles.nickname || player.profiles.name,
+            avatar: player.profiles.avatar_url,
+          }));
+
+          return {
+            id: match.id,
+            title: match.title,
+            location: match.location,
+            date: new Date(match.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            startTime: match.start_time.slice(0, 5),
+            endTime: match.end_time.slice(0, 5),
+            players,
+            maxPlayers: match.max_players,
+            fee: match.fee,
+            createdBy: match.created_by,
+          };
+        })
+      );
+
+      setMatches(matchesWithPlayers);
     } catch (error) {
       console.error('Error fetching matches:', error);
       toast({
