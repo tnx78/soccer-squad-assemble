@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -76,8 +76,13 @@ export const AuthDialog = () => {
           },
         });
         
-        if (signUpError) throw signUpError;
-        if (!signUpData.user?.id) throw new Error("No user ID returned");
+        if (signUpError) {
+          throw new Error(signUpError.message);
+        }
+        
+        if (!signUpData.user?.id) {
+          throw new Error("Registration failed. Please try again.");
+        }
 
         // Create profile entry
         const { error: profileError } = await supabase
@@ -89,7 +94,9 @@ export const AuthDialog = () => {
             }
           ]);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          throw new Error("Failed to create profile. Please try again.");
+        }
 
         toast.success("Registration successful! Please check your email.");
         setOpen(false);
@@ -99,15 +106,24 @@ export const AuthDialog = () => {
           password: data.password,
         });
         
-        if (error) throw error;
+        if (error) {
+          if (error.message === "Invalid login credentials") {
+            throw new Error("Invalid email or password. Please try again.");
+          }
+          throw new Error(error.message);
+        }
+        
         toast.success("Login successful!");
         setOpen(false);
       }
     } catch (error: any) {
       console.error("Auth error:", error);
-      toast.error(error.message || "Authentication failed. Please try again.");
+      toast.error("Authentication failed", {
+        description: error.message || "Please try again later"
+      });
     } finally {
       setIsLoading(false);
+      form.reset();
     }
   };
 
@@ -119,6 +135,9 @@ export const AuthDialog = () => {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Authentication</DialogTitle>
+          <DialogDescription>
+            Login or create a new account to continue.
+          </DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
