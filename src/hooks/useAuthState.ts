@@ -63,29 +63,23 @@ export const useAuthState = () => {
 
   const handleSignOut = async () => {
     try {
-      // First clear local state
+      // First check if we have a session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Clear local state regardless of session status
       setUser(null);
       setProfile(null);
 
-      // Then attempt to sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      // If there's an error about session not found, we can ignore it
-      // since we've already cleared the local state
-      if (error) {
-        if (error.message.includes('session_not_found')) {
-          // Session already cleared, just show success message
-          toast.success("Signed out successfully");
-          return;
-        }
-        // For any other error, throw it
-        throw error;
+      // If we have a session, try to sign out
+      if (session) {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
       }
       
       toast.success("Signed out successfully");
     } catch (error: any) {
       console.error('Error signing out:', error);
-      // Only show error toast for non-session-not-found errors
+      // Don't show error toast for session-related errors
       if (!error.message.includes('session_not_found')) {
         toast.error("Failed to sign out", {
           description: error.message
