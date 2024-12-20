@@ -7,7 +7,7 @@ interface Player {
 }
 
 export interface Match {
-  id: number;
+  id: string;
   title: string;
   location: string;
   date: string;
@@ -16,17 +16,26 @@ export interface Match {
   players: Player[];
   maxPlayers: number;
   fee: number;
+  createdBy: string;
 }
 
 interface MatchListProps {
   matches: Match[];
   currentUserId?: string;
-  onJoinMatch: (matchId: number) => void;
-  onLeaveMatch: (matchId: number) => void;
+  onJoinMatch: (matchId: string) => void;
+  onLeaveMatch: (matchId: string) => void;
+  onDeleteMatch: (matchId: string) => void;
   isAuthenticated: boolean;
 }
 
-export const MatchList = ({ matches, currentUserId, onJoinMatch, onLeaveMatch, isAuthenticated }: MatchListProps) => {
+export const MatchList = ({ 
+  matches, 
+  currentUserId, 
+  onJoinMatch, 
+  onLeaveMatch, 
+  onDeleteMatch,
+  isAuthenticated 
+}: MatchListProps) => {
   return (
     <div className="space-y-4">
       {matches.map((match) => (
@@ -42,8 +51,10 @@ export const MatchList = ({ matches, currentUserId, onJoinMatch, onLeaveMatch, i
           fee={match.fee}
           onJoin={() => onJoinMatch(match.id)}
           onLeave={() => onLeaveMatch(match.id)}
+          onDelete={() => onDeleteMatch(match.id)}
           hasJoined={currentUserId ? match.players.some(player => player.id === currentUserId) : false}
           isAuthenticated={isAuthenticated}
+          isOwner={currentUserId === match.createdBy}
         />
       ))}
     </div>

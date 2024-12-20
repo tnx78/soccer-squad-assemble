@@ -9,61 +9,33 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { UserRound, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const mockMatches: Match[] = [
-  {
-    id: 1,
-    title: "Sunday Friendly Match",
-    location: "Central Park Field",
-    date: "Sun, Mar 24",
-    startTime: "15:00",
-    endTime: "16:00",
-    players: [
-      { id: "1", name: "John Doe", avatar: "/placeholder.svg" },
-      { id: "2", name: "Jane Smith", avatar: "/placeholder.svg" }
-    ],
-    maxPlayers: 12,
-    fee: 5000,
-  },
-  {
-    id: 2,
-    title: "5-a-side Tournament",
-    location: "Sports Complex",
-    date: "Sat, Mar 23",
-    startTime: "14:00",
-    endTime: "15:30",
-    players: [
-      { id: "3", name: "Mike Johnson", avatar: "/placeholder.svg" }
-    ],
-    maxPlayers: 10,
-    fee: 3000,
-  },
-];
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const Index = () => {
-  const [matches, setMatches] = useState<Match[]>(mockMatches);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<{ avatar_url?: string; name?: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+        fetchMatches();
       }
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchProfile(session.user.id);
+        await fetchMatches();
       } else {
         setProfile(null);
+        setMatches([]);
       }
     });
 
@@ -85,11 +57,81 @@ const Index = () => {
     setProfile(data);
   };
 
+  const fetchMatches = async () => {
+    const { data, error } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        players:match_players(
+          player:profiles(id, name, avatar_url)
+        )
+      `);
+
+    if (error) {
+      console.error('Error fetching matches:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load matches",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formattedMatches = data.map(match => ({
+      id: match.id,
+      title: match.title,
+      location: match.location,
+      date: new Date(match.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      startTime: match.start_time.slice(0, 5),
+      endTime: match.end_time.slice(0, 5),
+      players: match.players.map((p: any) => ({
+        id: p.player.id,
+        name: p.player.name,
+        avatar: p.player.avatar_url,
+      })),
+      maxPlayers: match.max_players,
+      fee: match.fee,
+      createdBy: match.created_by,
+    }));
+
+    setMatches(formattedMatches);
+  };
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
       title: "Signed out successfully",
     });
+  };
+
+  const handleDeleteMatch = async (matchId: string) => {
+    const { error } = await supabase
+      .from('matches')
+      .delete()
+      .eq('id', matchId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Match deleted successfully",
+    });
+    fetchMatches();
   };
 
   const handleCreateMatch = (data: any) => {
@@ -178,22 +220,18 @@ const Index = () => {
             {user ? (
               <>
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url} />
-                    <AvatarFallback>{profile?.name?.[0] || user.email?.[0]}</AvatarFallback>
-                  </Avatar>
+                  <ProfileDialog user={user}>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={profile?.avatar_url} />
+                        <AvatarFallback>{profile?.name?.[0] || user.email?.[0]}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </ProfileDialog>
                   <span className="text-sm font-medium">
                     {profile?.name || user.email?.split('@')[0]}
                   </span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {}}
-                  className="rounded-full"
-                >
-                  <UserRound className="h-5 w-5" />
-                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -215,6 +253,7 @@ const Index = () => {
           currentUserId={user?.id}
           onJoinMatch={handleJoinMatch}
           onLeaveMatch={handleLeaveMatch}
+          onDeleteMatch={handleDeleteMatch}
           isAuthenticated={!!user}
         />
       </div>

@@ -1,9 +1,10 @@
-import { Calendar, MapPin, Users, Clock, DollarSign } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, DollarSign, Trash2 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Player {
   id: string;
@@ -22,8 +23,10 @@ interface MatchCardProps {
   fee: number;
   onJoin: () => void;
   onLeave: () => void;
+  onDelete: () => void;
   hasJoined: boolean;
   isAuthenticated: boolean;
+  isOwner: boolean;
 }
 
 export const MatchCard = ({ 
@@ -37,15 +40,42 @@ export const MatchCard = ({
   fee,
   onJoin,
   onLeave,
+  onDelete,
   hasJoined,
-  isAuthenticated
+  isAuthenticated,
+  isOwner
 }: MatchCardProps) => {
   const isFull = players.length >= maxPlayers;
 
   return (
     <Card className="w-full animate-fade-in hover:shadow-lg transition-shadow">
       <CardContent className="pt-6">
-        <h3 className="font-semibold text-lg mb-2">{title}</h3>
+        <div className="flex justify-between items-start">
+          <h3 className="font-semibold text-lg mb-2">{title}</h3>
+          {isOwner && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the match.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDelete} className="bg-red-500 hover:bg-red-600">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
         <div className="space-y-2 text-sm text-gray-600">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
