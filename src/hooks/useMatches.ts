@@ -21,7 +21,6 @@ export const useMatches = () => {
 
   const fetchMatches = async () => {
     try {
-      // First, get all matches
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select('*')
@@ -30,7 +29,6 @@ export const useMatches = () => {
 
       if (matchesError) throw matchesError;
 
-      // Then, for each match, get its players
       const matchesWithPlayers = await Promise.all(
         matchesData.map(async (match) => {
           const { data: playersData, error: playersError } = await supabase
@@ -48,7 +46,6 @@ export const useMatches = () => {
 
           if (playersError) throw playersError;
 
-          // Use type assertion after verifying the structure
           const typedPlayersData = playersData as unknown as MatchPlayerResponse[];
           const players = typedPlayersData.map(player => ({
             id: player.profiles.id,
@@ -83,14 +80,32 @@ export const useMatches = () => {
   };
 
   const handleJoinMatch = async (matchId: string) => {
-    const { error } = await supabase
-      .from('match_players')
-      .insert([{ match_id: matchId }]);
-
-    if (error) {
+    // Get the current user's session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
       toast({
         title: "Error",
-        description: "Failed to join match",
+        description: "You must be logged in to join a match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('match_players')
+      .insert([{ 
+        match_id: matchId,
+        player_id: session.user.id  // Set the player_id to the current user's ID
+      }]);
+
+    if (error) {
+      console.error('Error joining match:', error);
+      toast({
+        title: "Error",
+        description: error.message === "new row violates row-level security policy for table \"match_players\"" 
+          ? "This match is full or you're already joined"
+          : "Failed to join match",
         variant: "destructive",
       });
       return;
@@ -104,10 +119,22 @@ export const useMatches = () => {
   };
 
   const handleLeaveMatch = async (matchId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to leave a match",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('match_players')
       .delete()
-      .eq('match_id', matchId);
+      .eq('match_id', matchId)
+      .eq('player_id', session.user.id);  // Ensure we're only deleting the current user's entry
 
     if (error) {
       toast({
