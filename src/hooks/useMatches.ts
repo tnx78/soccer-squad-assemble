@@ -12,7 +12,7 @@ interface Profile {
 
 interface MatchPlayerResponse {
   player_id: string;
-  profiles: Profile;  // This represents the joined profile data
+  profiles: Profile;
 }
 
 export const useMatches = () => {
@@ -37,7 +37,7 @@ export const useMatches = () => {
             .from('match_players')
             .select(`
               player_id,
-              profiles!match_players_player_id_fkey (
+              profiles!inner (
                 id,
                 name,
                 nickname,
@@ -48,7 +48,9 @@ export const useMatches = () => {
 
           if (playersError) throw playersError;
 
-          const players = (playersData as MatchPlayerResponse[]).map(player => ({
+          // Use type assertion after verifying the structure
+          const typedPlayersData = playersData as unknown as MatchPlayerResponse[];
+          const players = typedPlayersData.map(player => ({
             id: player.profiles.id,
             name: player.profiles.nickname || player.profiles.name || 'Anonymous',
             avatar: player.profiles.avatar_url,
