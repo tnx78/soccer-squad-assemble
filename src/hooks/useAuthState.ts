@@ -63,17 +63,23 @@ export const useAuthState = () => {
 
   const handleSignOut = async () => {
     try {
-      // Clear local state immediately
+      // Clear local state first
       setUser(null);
       setProfile(null);
 
-      // Attempt to sign out without checking session
-      await supabase.auth.signOut();
-      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Only attempt to sign out if we have a session
+      if (session) {
+        await supabase.auth.signOut();
+      }
+
+      // Show success message after state is cleared
       toast.success("Signed out successfully");
     } catch (error) {
       console.error('Error during sign out:', error);
-      // We don't show error toast since local state is already cleared
+      // Don't show error toast since local state is already cleared
     }
   };
 
