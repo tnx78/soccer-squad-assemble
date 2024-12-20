@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { User } from "@supabase/supabase-js";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "./ProfileAvatar";
 
@@ -25,10 +24,11 @@ type ProfileForm = z.infer<typeof profileSchema>;
 
 interface ProfileDialogProps {
   user: User | null;
+  children: React.ReactNode;
 }
 
-export const ProfileDialog = ({ user }: ProfileDialogProps) => {
-  const { profile, loading, updateProfile } = useProfile(user);
+export const ProfileDialog = ({ user, children }: ProfileDialogProps) => {
+  const { profile, updateProfile } = useProfile(user);
   
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -51,14 +51,7 @@ export const ProfileDialog = ({ user }: ProfileDialogProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar>
-            <AvatarImage src={profile?.avatar_url || ""} />
-            <AvatarFallback>
-              {user?.email?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
+        {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
