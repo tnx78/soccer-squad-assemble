@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
 
 interface Profile {
@@ -15,7 +15,6 @@ interface Profile {
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const { toast } = useToast();
 
   const loadProfile = async (userId: string) => {
     try {
@@ -71,23 +70,27 @@ export const useAuthState = () => {
       // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
-      // If there's an error but it's just about session not found, we can ignore it
+      // If there's an error about session not found, we can ignore it
       // since we've already cleared the local state
-      if (error && !error.message.includes('session_not_found')) {
+      if (error) {
+        if (error.message.includes('session_not_found')) {
+          // Session already cleared, just show success message
+          toast.success("Signed out successfully");
+          return;
+        }
+        // For any other error, throw it
         throw error;
       }
       
-      toast({
-        title: "Success",
-        description: "Signed out successfully",
-      });
-    } catch (error) {
+      toast.success("Signed out successfully");
+    } catch (error: any) {
       console.error('Error signing out:', error);
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
+      // Only show error toast for non-session-not-found errors
+      if (!error.message.includes('session_not_found')) {
+        toast.error("Failed to sign out", {
+          description: error.message
+        });
+      }
     }
   };
 
