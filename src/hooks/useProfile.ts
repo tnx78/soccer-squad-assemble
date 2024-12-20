@@ -21,6 +21,7 @@ export const useProfile = (user: User | null) => {
     try {
       if (!user) {
         setProfile(null);
+        setLoading(false);
         return;
       }
 
@@ -30,7 +31,11 @@ export const useProfile = (user: User | null) => {
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading profile:', error);
+        throw error;
+      }
+
       setProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -74,8 +79,30 @@ export const useProfile = (user: User | null) => {
     }
   };
 
+  // Load profile when user changes or component mounts
   useEffect(() => {
     loadProfile();
+  }, [user?.id]);
+
+  // Subscribe to realtime profile changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('profile-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${user.id}`,
+      }, () => {
+        loadProfile();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   return {

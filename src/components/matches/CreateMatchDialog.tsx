@@ -7,15 +7,18 @@ import { Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { addDays, format } from "date-fns";
 
 const createMatchSchema = z.object({
   title: z.string().min(1, "Title is required"),
   location: z.string().min(1, "Location is required"),
-  date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required").refine((time) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours >= 0 && hours < 24 && [0, 15, 30, 45].includes(minutes);
-  }, "Invalid time format"),
+  date: z.string().min(1, "Date is required").refine((date) => {
+    const selectedDate = new Date(date);
+    const tomorrow = addDays(new Date(), 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return selectedDate >= tomorrow;
+  }, "Date must be tomorrow or later"),
+  time: z.string().min(1, "Time is required"),
   duration: z.enum(["60", "90", "120"], {
     required_error: "Please select a match duration",
   }),
@@ -45,7 +48,7 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
 
   const generateTimeOptions = () => {
     const options = [];
-    for (let hour = 0; hour < 24; hour++) {
+    for (let hour = 8; hour <= 22; hour++) {
       for (let minute of [0, 15, 30, 45]) {
         const formattedHour = hour.toString().padStart(2, '0');
         const formattedMinute = minute.toString().padStart(2, '0');
@@ -54,6 +57,9 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
     }
     return options;
   };
+
+  const tomorrow = addDays(new Date(), 1);
+  const minDate = format(tomorrow, 'yyyy-MM-dd');
 
   return (
     <Dialog>
@@ -100,7 +106,7 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input type="date" min={minDate} {...field} />
                   </FormControl>
                 </FormItem>
               )}
