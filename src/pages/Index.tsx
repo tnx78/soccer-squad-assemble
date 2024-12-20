@@ -7,10 +7,34 @@ import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useMatches } from "@/hooks/useMatches";
+import { CreateMatchForm } from "@/components/matches/CreateMatchDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const { user, profile, handleSignOut } = useAuthState();
   const { matches, handleJoinMatch, handleLeaveMatch, handleDeleteMatch } = useMatches();
+
+  const handleCreateMatch = async (data: CreateMatchForm) => {
+    if (!user) return;
+
+    const endTime = new Date(`2000-01-01T${data.time}`);
+    endTime.setMinutes(endTime.getMinutes() + parseInt(data.duration));
+
+    const { error } = await supabase.from('matches').insert({
+      title: data.title,
+      location: data.location,
+      date: data.date,
+      start_time: data.time,
+      end_time: endTime.toTimeString().slice(0, 5),
+      max_players: data.maxPlayers,
+      fee: data.fee,
+      created_by: user.id
+    });
+
+    if (error) {
+      console.error('Error creating match:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6">
@@ -41,7 +65,7 @@ const Index = () => {
                 >
                   <LogOut className="h-5 w-5" />
                 </Button>
-                <CreateMatchDialog />
+                <CreateMatchDialog onCreateMatch={handleCreateMatch} />
               </>
             ) : (
               <AuthDialog />
