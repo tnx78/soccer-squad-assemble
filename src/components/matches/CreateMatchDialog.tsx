@@ -23,7 +23,7 @@ const createMatchSchema = z.object({
   fee: z.coerce.number().min(0, "Fee cannot be negative"),
 });
 
-type CreateMatchForm = z.infer<typeof createMatchSchema>;
+export type CreateMatchForm = z.infer<typeof createMatchSchema>;
 
 interface CreateMatchDialogProps {
   onCreateMatch: (data: CreateMatchForm) => void;
