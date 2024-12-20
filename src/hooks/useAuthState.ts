@@ -64,8 +64,18 @@ export const useAuthState = () => {
 
   const handleSignOut = async () => {
     try {
+      // First clear local state
+      setUser(null);
+      setProfile(null);
+
+      // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      
+      // If there's an error but it's just about session not found, we can ignore it
+      // since we've already cleared the local state
+      if (error && !error.message.includes('session_not_found')) {
+        throw error;
+      }
       
       toast({
         title: "Success",
