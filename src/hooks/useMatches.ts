@@ -8,43 +8,46 @@ export const useMatches = () => {
   const { toast } = useToast();
 
   const fetchMatches = async () => {
-    const { data, error } = await supabase
-      .from('matches')
-      .select(`
-        *,
-        players:match_players(
-          player:profiles(id, name, avatar_url)
-        )
-      `);
+    try {
+      const { data, error } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          players:match_players(
+            player:profiles(id, name, nickname, avatar_url)
+          )
+        `)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
 
-    if (error) {
+      if (error) throw error;
+
+      const formattedMatches = data.map(match => ({
+        id: match.id,
+        title: match.title,
+        location: match.location,
+        date: new Date(match.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        startTime: match.start_time.slice(0, 5),
+        endTime: match.end_time.slice(0, 5),
+        players: match.players.map((p: any) => ({
+          id: p.player.id,
+          name: p.player.nickname || p.player.name,
+          avatar: p.player.avatar_url,
+        })),
+        maxPlayers: match.max_players,
+        fee: match.fee,
+        createdBy: match.created_by,
+      }));
+
+      setMatches(formattedMatches);
+    } catch (error) {
       console.error('Error fetching matches:', error);
       toast({
         title: "Error",
         description: "Failed to load matches",
         variant: "destructive",
       });
-      return;
     }
-
-    const formattedMatches = data.map(match => ({
-      id: match.id,
-      title: match.title,
-      location: match.location,
-      date: new Date(match.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-      startTime: match.start_time.slice(0, 5),
-      endTime: match.end_time.slice(0, 5),
-      players: match.players.map((p: any) => ({
-        id: p.player.id,
-        name: p.player.name,
-        avatar: p.player.avatar_url,
-      })),
-      maxPlayers: match.max_players,
-      fee: match.fee,
-      createdBy: match.created_by,
-    }));
-
-    setMatches(formattedMatches);
   };
 
   const handleJoinMatch = async (matchId: string) => {

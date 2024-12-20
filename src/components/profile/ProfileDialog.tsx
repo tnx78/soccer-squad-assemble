@@ -9,6 +9,7 @@ import { z } from "zod";
 import { User } from "@supabase/supabase-js";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "./ProfileAvatar";
+import { useState } from "react";
 
 const positions = ["goalkeeper", "defender", "midfielder", "attacker"] as const;
 type Position = typeof positions[number];
@@ -25,10 +26,12 @@ type ProfileForm = z.infer<typeof profileSchema>;
 interface ProfileDialogProps {
   user: User | null;
   children: React.ReactNode;
+  onProfileUpdate?: () => Promise<void>;
 }
 
-export const ProfileDialog = ({ user, children }: ProfileDialogProps) => {
+export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialogProps) => {
   const { profile, updateProfile } = useProfile(user);
+  const [open, setOpen] = useState(false);
   
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -42,14 +45,21 @@ export const ProfileDialog = ({ user, children }: ProfileDialogProps) => {
 
   const onSubmit = async (data: ProfileForm) => {
     await updateProfile(data);
+    if (onProfileUpdate) {
+      await onProfileUpdate();
+    }
+    setOpen(false);
   };
 
   const handleAvatarUpdate = async (url: string) => {
     await updateProfile({ avatar_url: url });
+    if (onProfileUpdate) {
+      await onProfileUpdate();
+    }
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>

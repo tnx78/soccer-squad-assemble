@@ -8,11 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useMatches } from "@/hooks/useMatches";
 import { CreateMatchForm } from "@/components/matches/CreateMatchDialog";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
-  const { user, profile, handleSignOut } = useAuthState();
-  const { matches, handleJoinMatch, handleLeaveMatch, handleDeleteMatch } = useMatches();
+  const { user, profile, handleSignOut, refreshProfile } = useAuthState();
+  const { matches, handleJoinMatch, handleLeaveMatch, handleDeleteMatch, fetchMatches } = useMatches();
+  const { toast } = useToast();
 
   const handleCreateMatch = async (data: CreateMatchForm) => {
     if (!user) return;
@@ -20,19 +22,34 @@ const Index = () => {
     const endTime = new Date(`2000-01-01T${data.time}`);
     endTime.setMinutes(endTime.getMinutes() + parseInt(data.duration));
 
-    const { error } = await supabase.from('matches').insert({
-      title: data.title,
-      location: data.location,
-      date: data.date,
-      start_time: data.time,
-      end_time: endTime.toTimeString().slice(0, 5),
-      max_players: data.maxPlayers,
-      fee: data.fee,
-      created_by: user.id
-    });
+    try {
+      const { error } = await supabase.from('matches').insert({
+        title: data.title,
+        location: data.location,
+        date: data.date,
+        start_time: data.time,
+        end_time: endTime.toTimeString().slice(0, 5),
+        max_players: data.maxPlayers,
+        fee: data.fee,
+        created_by: user.id
+      });
 
-    if (error) {
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Match created successfully",
+      });
+
+      // Refresh matches list
+      await fetchMatches();
+    } catch (error) {
       console.error('Error creating match:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create match",
+        variant: "destructive",
+      });
     }
   };
 
@@ -45,16 +62,16 @@ const Index = () => {
             {user ? (
               <>
                 <div className="flex items-center gap-2">
-                  <ProfileDialog user={user}>
+                  <ProfileDialog user={user} onProfileUpdate={refreshProfile}>
                     <Button variant="ghost" size="icon" className="rounded-full">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={profile?.avatar_url} />
-                        <AvatarFallback>{profile?.name?.[0] || user.email?.[0]}</AvatarFallback>
+                        <AvatarFallback>{profile?.nickname?.[0] || profile?.name?.[0] || user.email?.[0]}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </ProfileDialog>
                   <span className="text-sm font-medium">
-                    {profile?.name || user.email?.split('@')[0]}
+                    {profile?.nickname || profile?.name || user.email?.split('@')[0]}
                   </span>
                 </div>
                 <Button
