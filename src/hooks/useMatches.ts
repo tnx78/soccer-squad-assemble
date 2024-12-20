@@ -3,6 +3,18 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Match } from "@/components/matches/MatchList";
 
+interface Profile {
+  id: string;
+  name: string | null;
+  nickname: string | null;
+  avatar_url: string | null;
+}
+
+interface MatchPlayer {
+  player_id: string;
+  profiles: Profile;
+}
+
 export const useMatches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const { toast } = useToast();
@@ -36,9 +48,9 @@ export const useMatches = () => {
 
           if (playersError) throw playersError;
 
-          const players = playersData.map(player => ({
+          const players = playersData.map((player: MatchPlayer) => ({
             id: player.profiles.id,
-            name: player.profiles.nickname || player.profiles.name,
+            name: player.profiles.nickname || player.profiles.name || 'Anonymous',
             avatar: player.profiles.avatar_url,
           }));
 
