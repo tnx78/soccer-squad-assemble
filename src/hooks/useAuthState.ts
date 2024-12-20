@@ -63,19 +63,12 @@ export const useAuthState = () => {
 
   const handleSignOut = async () => {
     try {
-      // Clear local state first
+      // Clear local state first for immediate UI feedback
       setUser(null);
       setProfile(null);
 
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        // Sign out only if there's an active session
-        await supabase.auth.signOut({
-          scope: 'local'
-        });
-      }
+      // Sign out without checking session or scope
+      await supabase.auth.signOut();
       
       toast.success("Signed out successfully");
     } catch (error) {
