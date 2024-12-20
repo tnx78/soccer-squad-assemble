@@ -12,7 +12,7 @@ interface Profile {
 
 interface MatchPlayer {
   player_id: string;
-  profiles: Profile;
+  profiles: Profile;  // Note: this is a single Profile object, not an array
 }
 
 export const useMatches = () => {
@@ -48,7 +48,8 @@ export const useMatches = () => {
 
           if (playersError) throw playersError;
 
-          const players = playersData.map((player: MatchPlayer) => ({
+          // Ensure playersData is treated as MatchPlayer[]
+          const players = (playersData as MatchPlayer[]).map((player) => ({
             id: player.profiles.id,
             name: player.profiles.nickname || player.profiles.name || 'Anonymous',
             avatar: player.profiles.avatar_url,
