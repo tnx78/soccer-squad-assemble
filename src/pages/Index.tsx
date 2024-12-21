@@ -32,8 +32,8 @@ const Index = () => {
         date: data.date,
         start_time: startTime,
         end_time: formattedEndTime,
-        max_players: data.maxPlayers,
-        fee: data.fee,
+        max_players: parseInt(data.maxPlayers),
+        fee: parseInt(data.fee),
         created_by: user.id
       });
 
@@ -44,7 +44,6 @@ const Index = () => {
         description: "Match created successfully",
       });
 
-      // Refresh matches list
       await fetchMatches();
     } catch (error) {
       console.error('Error creating match:', error);

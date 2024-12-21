@@ -1,218 +1,125 @@
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { addDays, format } from "date-fns";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus } from "lucide-react";
 
-const createMatchSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  location: z.string().min(1, "Location is required"),
-  date: z.string().min(1, "Date is required").refine((date) => {
-    const selectedDate = new Date(date);
-    const tomorrow = addDays(new Date(), 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    return selectedDate >= tomorrow;
-  }, "Date must be tomorrow or later"),
-  hours: z.string().min(1, "Hours required"),
-  minutes: z.string().min(1, "Minutes required"),
-  duration: z.enum(["60", "90", "120"], {
-    required_error: "Please select a match duration",
-  }),
-  maxPlayers: z.coerce.number().min(2, "Minimum 2 players required"),
-  fee: z.coerce.number().min(0, "Fee cannot be negative"),
-});
-
-export type CreateMatchForm = z.infer<typeof createMatchSchema>;
+export interface CreateMatchForm {
+  title: string;
+  location: string;
+  date: string;
+  hours: string;
+  minutes: string;
+  duration: string;
+  maxPlayers: string;
+  fee: string;
+}
 
 interface CreateMatchDialogProps {
-  onCreateMatch: (data: CreateMatchForm) => void;
+  onCreateMatch: (data: CreateMatchForm) => Promise<void>;
 }
 
 export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<CreateMatchForm>({
-    resolver: zodResolver(createMatchSchema),
-    defaultValues: {
-      title: "",
-      location: "",
-      date: "",
-      hours: "12",
-      minutes: "00",
-      duration: "60",
-      maxPlayers: 2,
-      fee: 0,
-    },
-  });
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateMatchForm>();
 
-  const handleSubmit = async (data: CreateMatchForm) => {
+  const onSubmit = async (data: CreateMatchForm) => {
     await onCreateMatch(data);
     setOpen(false);
-    form.reset();
+    reset();
   };
-
-  const generateHourOptions = () => {
-    return Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-  };
-
-  const generateMinuteOptions = () => {
-    return ['00', '15', '30', '45'];
-  };
-
-  const tomorrow = addDays(new Date(), 1);
-  const minDate = format(tomorrow, 'yyyy-MM-dd');
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 mr-2" />
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
           Create Match
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Match</DialogTitle>
+          <DialogTitle>Create a New Match</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter match title" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter location" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" min={minDate} {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <div className="flex gap-4">
-              <FormField
-                control={form.control}
-                name="hours"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Hours</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="HH" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {generateHourOptions().map((hour) => (
-                          <SelectItem key={hour} value={hour}>
-                            {hour}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="minutes"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Minutes</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="MM" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {generateMinuteOptions().map((minute) => (
-                          <SelectItem key={minute} value={minute}>
-                            {minute}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" {...register("title", { required: true })} />
+          </div>
+          <div>
+            <Label htmlFor="location">Location</Label>
+            <Input id="location" {...register("location", { required: true })} />
+          </div>
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input id="date" type="date" {...register("date", { required: true })} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="hours">Start Time (Hours)</Label>
+              <select 
+                id="hours" 
+                className="w-full border rounded-md h-10 px-3"
+                {...register("hours", { required: true })}
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i.toString().padStart(2, '0')}>
+                    {i.toString().padStart(2, '0')}
+                  </option>
+                ))}
+              </select>
             </div>
-            <FormField
-              control={form.control}
-              name="duration"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Match Duration</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="90">90 minutes</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
+            <div>
+              <Label htmlFor="minutes">Minutes</Label>
+              <select 
+                id="minutes" 
+                className="w-full border rounded-md h-10 px-3"
+                {...register("minutes", { required: true })}
+              >
+                {['00', '15', '30', '45'].map((minute) => (
+                  <option key={minute} value={minute}>
+                    {minute}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="duration">Duration (minutes)</Label>
+            <select 
+              id="duration" 
+              className="w-full border rounded-md h-10 px-3"
+              {...register("duration", { required: true })}
+            >
+              {[60, 90, 120].map((duration) => (
+                <option key={duration} value={duration}>
+                  {duration} minutes
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="maxPlayers">Maximum Players</Label>
+            <Input 
+              id="maxPlayers" 
+              type="number" 
+              {...register("maxPlayers", { required: true, min: 2 })} 
             />
-            <FormField
-              control={form.control}
-              name="maxPlayers"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maximum Players</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="2" placeholder="Enter max players" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
+          </div>
+          <div>
+            <Label htmlFor="fee">Fee (HUF)</Label>
+            <Input 
+              id="fee" 
+              type="number" 
+              {...register("fee", { required: true, min: 0 })} 
             />
-            <FormField
-              control={form.control}
-              name="fee"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Match Fee (HUF)</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" placeholder="Enter match fee" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full">Create Match</Button>
-          </form>
-        </Form>
+          </div>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            Create Match
+          </Button>
+        </form>
       </DialogContent>
     </Dialog>
   );
