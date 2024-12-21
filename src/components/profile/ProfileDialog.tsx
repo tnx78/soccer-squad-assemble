@@ -23,7 +23,7 @@ const profileSchema = z.object({
   age: z.coerce.number().min(16, "Must be at least 16 years old"),
   position: z.enum(positions),
   player_number: z.coerce.number().min(1, "Number must be at least 1").optional(),
-  skill_level: z.enum(["1", "2", "3", "4", "5"]).transform(Number),
+  skill_level: z.coerce.number().min(1).max(5),
   phone: z.string().optional(),
   email: z.string().email().optional(),
 });
@@ -48,7 +48,7 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
       age: profile?.age || 16,
       position: (profile?.position as Position) || "midfielder",
       player_number: profile?.player_number || undefined,
-      skill_level: (profile?.skill_level?.toString() as "1" | "2" | "3" | "4" | "5") || "3",
+      skill_level: profile?.skill_level || 3,
       phone: profile?.phone || "",
       email: profile?.email || user?.email || "",
     },
@@ -169,7 +169,7 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Skill Level</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your skill level" />

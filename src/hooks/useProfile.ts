@@ -5,11 +5,15 @@ import { useToast } from '@/components/ui/use-toast';
 
 export interface Profile {
   id: string;
-  name: string;
-  nickname?: string;
-  age: number;
-  position: string;
-  avatar_url?: string;
+  name: string | null;
+  nickname?: string | null;
+  age: number | null;
+  position: string | null;
+  avatar_url?: string | null;
+  player_number?: number | null;
+  skill_level?: number | null;
+  phone?: string | null;
+  email?: string | null;
 }
 
 export const useProfile = (user: User | null) => {
