@@ -23,12 +23,15 @@ interface CreateMatchDialogProps {
 
 export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateMatchForm>();
+  const { register, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm<CreateMatchForm>();
 
   // Get tomorrow's date in YYYY-MM-DD format
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
+
+  const maxPlayers = watch('maxPlayers');
+  const availableSlots = maxPlayers ? parseInt(maxPlayers) : 0;
 
   const onSubmit = async (data: CreateMatchForm) => {
     await onCreateMatch(data);
@@ -117,6 +120,12 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
               type="number" 
               {...register("maxPlayers", { required: true, min: 2 })} 
             />
+          </div>
+          <div>
+            <Label>Available Slots</Label>
+            <div className="text-sm text-gray-600 mt-1">
+              {availableSlots} players can join this match
+            </div>
           </div>
           <div>
             <Label htmlFor="fee">Fee (HUF)</Label>
