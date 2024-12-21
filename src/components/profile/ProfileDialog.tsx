@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,11 +14,18 @@ import { useState } from "react";
 const positions = ["goalkeeper", "defender", "midfielder", "attacker"] as const;
 type Position = typeof positions[number];
 
+const skillLevels = [1, 2, 3, 4, 5] as const;
+type SkillLevel = typeof skillLevels[number];
+
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   nickname: z.string().optional(),
   age: z.coerce.number().min(16, "Must be at least 16 years old"),
   position: z.enum(positions),
+  player_number: z.coerce.number().min(1, "Number must be at least 1").optional(),
+  skill_level: z.enum(["1", "2", "3", "4", "5"]).transform(Number),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -40,6 +47,10 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
       nickname: profile?.nickname || "",
       age: profile?.age || 16,
       position: (profile?.position as Position) || "midfielder",
+      player_number: profile?.player_number || undefined,
+      skill_level: (profile?.skill_level?.toString() as "1" | "2" | "3" | "4" | "5") || "3",
+      phone: profile?.phone || "",
+      email: profile?.email || user?.email || "",
     },
   });
 
@@ -85,6 +96,7 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
                   <FormControl>
                     <Input placeholder="Enter your name" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -97,6 +109,7 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
                   <FormControl>
                     <Input placeholder="Enter your nickname" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -109,6 +122,7 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
                   <FormControl>
                     <Input type="number" min="16" placeholder="Enter your age" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -132,6 +146,70 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="player_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Player Number (optional)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="1" placeholder="Enter your player number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="skill_level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Skill Level</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your skill level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {skillLevels.map((level) => (
+                        <SelectItem key={level} value={level.toString()}>
+                          {level} {level === 1 ? '(Beginner)' : level === 5 ? '(Expert)' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number (optional)</FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="Enter your phone number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" disabled value={user?.email || ''} />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
