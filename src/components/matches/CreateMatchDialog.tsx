@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addDays, format } from "date-fns";
+import { useState } from "react";
 
 const createMatchSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -18,7 +19,8 @@ const createMatchSchema = z.object({
     tomorrow.setHours(0, 0, 0, 0);
     return selectedDate >= tomorrow;
   }, "Date must be tomorrow or later"),
-  time: z.string().min(1, "Time is required"),
+  hours: z.string().min(1, "Hours required"),
+  minutes: z.string().min(1, "Minutes required"),
   duration: z.enum(["60", "90", "120"], {
     required_error: "Please select a match duration",
   }),
@@ -33,36 +35,40 @@ interface CreateMatchDialogProps {
 }
 
 export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => {
+  const [open, setOpen] = useState(false);
   const form = useForm<CreateMatchForm>({
     resolver: zodResolver(createMatchSchema),
     defaultValues: {
       title: "",
       location: "",
       date: "",
-      time: "",
+      hours: "12",
+      minutes: "00",
       duration: "60",
       maxPlayers: 2,
       fee: 0,
     },
   });
 
-  const generateTimeOptions = () => {
-    const options = [];
-    for (let hour = 8; hour <= 22; hour++) {
-      for (let minute of [0, 15, 30, 45]) {
-        const formattedHour = hour.toString().padStart(2, '0');
-        const formattedMinute = minute.toString().padStart(2, '0');
-        options.push(`${formattedHour}:${formattedMinute}`);
-      }
-    }
-    return options;
+  const handleSubmit = async (data: CreateMatchForm) => {
+    await onCreateMatch(data);
+    setOpen(false);
+    form.reset();
+  };
+
+  const generateHourOptions = () => {
+    return Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  };
+
+  const generateMinuteOptions = () => {
+    return ['00', '15', '30', '45'];
   };
 
   const tomorrow = addDays(new Date(), 1);
   const minDate = format(tomorrow, 'yyyy-MM-dd');
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="bg-primary hover:bg-primary/90">
           <Plus className="w-4 h-4 mr-2" />
@@ -74,7 +80,7 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
           <DialogTitle>Create New Match</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onCreateMatch)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="title"
@@ -111,29 +117,54 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Time</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select start time" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {generateTimeOptions().map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
+            <div className="flex gap-4">
+              <FormField
+                control={form.control}
+                name="hours"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Hours</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="HH" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {generateHourOptions().map((hour) => (
+                          <SelectItem key={hour} value={hour}>
+                            {hour}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="minutes"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Minutes</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="MM" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {generateMinuteOptions().map((minute) => (
+                          <SelectItem key={minute} value={minute}>
+                            {minute}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="duration"

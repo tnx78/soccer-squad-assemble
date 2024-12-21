@@ -19,16 +19,19 @@ const Index = () => {
   const handleCreateMatch = async (data: CreateMatchForm) => {
     if (!user) return;
 
-    const endTime = new Date(`2000-01-01T${data.time}`);
-    endTime.setMinutes(endTime.getMinutes() + parseInt(data.duration));
+    const startTime = `${data.hours}:${data.minutes}`;
+    const endTime = new Date();
+    endTime.setHours(parseInt(data.hours));
+    endTime.setMinutes(parseInt(data.minutes) + parseInt(data.duration));
+    const formattedEndTime = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
 
     try {
       const { error } = await supabase.from('matches').insert({
         title: data.title,
         location: data.location,
         date: data.date,
-        start_time: data.time,
-        end_time: endTime.toTimeString().slice(0, 5),
+        start_time: startTime,
+        end_time: formattedEndTime,
         max_players: data.maxPlayers,
         fee: data.fee,
         created_by: user.id
