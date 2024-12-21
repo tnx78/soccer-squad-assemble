@@ -25,6 +25,11 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
   const [open, setOpen] = useState(false);
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateMatchForm>();
 
+  // Get tomorrow's date in YYYY-MM-DD format
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split('T')[0];
+
   const onSubmit = async (data: CreateMatchForm) => {
     await onCreateMatch(data);
     setOpen(false);
@@ -54,7 +59,12 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
           </div>
           <div>
             <Label htmlFor="date">Date</Label>
-            <Input id="date" type="date" {...register("date", { required: true })} />
+            <Input 
+              id="date" 
+              type="date" 
+              min={minDate}
+              {...register("date", { required: true })} 
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

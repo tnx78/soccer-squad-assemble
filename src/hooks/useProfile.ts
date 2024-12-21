@@ -36,7 +36,10 @@ export const useProfile = (user: User | null) => {
         throw error;
       }
 
-      setProfile(data);
+      // Only update the profile if we got valid data
+      if (data) {
+        setProfile(data);
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
       toast({
