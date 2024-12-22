@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 
 export interface CreateMatchForm {
-  title: string;
   location: string;
   date: string;
   hours: string;
@@ -17,6 +16,19 @@ export interface CreateMatchForm {
   availableSlots: string;
   fee: string;
 }
+
+const generateTitle = (date: string, hours: string) => {
+  const dateObj = new Date(date);
+  const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+  const hour = parseInt(hours);
+  
+  let timeOfDay;
+  if (hour < 12) timeOfDay = "Morning";
+  else if (hour < 17) timeOfDay = "Afternoon";
+  else timeOfDay = "Evening";
+  
+  return `${dayName} ${timeOfDay} Game`;
+};
 
 interface CreateMatchDialogProps {
   onCreateMatch: (data: CreateMatchForm) => Promise<void>;
@@ -57,15 +69,9 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
           <DialogTitle>Create a New Match</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="title" className="w-20">Title</Label>
-              <Input id="title" {...register("title", { required: true })} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="location" className="w-20">Location</Label>
-              <Input id="location" {...register("location", { required: true })} />
-            </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="location" className="w-20">Location</Label>
+            <Input id="location" {...register("location", { required: true })} />
           </div>
           
           <div className="flex items-center gap-2">

@@ -17,6 +17,7 @@ export interface Match {
   maxPlayers: number;
   fee: number;
   createdBy: string;
+  createdByName: string;
 }
 
 interface MatchListProps {
@@ -55,6 +56,7 @@ export const MatchList = ({
           hasJoined={currentUserId ? match.players.some(player => player.id === currentUserId) : false}
           isAuthenticated={isAuthenticated}
           isOwner={currentUserId === match.createdBy}
+          createdBy={match.createdByName}
         />
       ))}
     </div>

@@ -27,6 +27,7 @@ interface MatchCardProps {
   hasJoined: boolean;
   isAuthenticated: boolean;
   isOwner: boolean;
+  createdBy: string;
 }
 
 export const MatchCard = ({ 
@@ -43,15 +44,20 @@ export const MatchCard = ({
   onDelete,
   hasJoined,
   isAuthenticated,
-  isOwner
+  isOwner,
+  createdBy
 }: MatchCardProps) => {
-  const isFull = players.length >= maxPlayers;
+  const availableSlots = maxPlayers - players.length;
+  const isFull = availableSlots <= 0;
 
   return (
     <Card className="w-full animate-fade-in hover:shadow-lg transition-shadow">
       <CardContent className="pt-6">
         <div className="flex justify-between items-start">
-          <h3 className="font-semibold text-lg mb-2">{title}</h3>
+          <div>
+            <h3 className="font-semibold text-lg mb-1">{title}</h3>
+            <span className="text-sm text-gray-500">(by {createdBy})</span>
+          </div>
           {isOwner && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -126,7 +132,7 @@ export const MatchCard = ({
       </CardContent>
       <CardFooter className="flex justify-between items-center">
         <Badge variant="secondary">
-          {isFull ? "Match Full" : `${maxPlayers - players.length} spots left`}
+          {isFull ? "Match Full" : `${availableSlots} spots left`}
         </Badge>
         {hasJoined ? (
           <Button 
