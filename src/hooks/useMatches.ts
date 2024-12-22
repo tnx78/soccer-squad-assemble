@@ -21,26 +21,27 @@ export const useMatches = () => {
 
   const fetchMatches = async () => {
     try {
-      // First, fetch all matches
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
-        .select('*')
+        .select(`
+          *,
+          match_players (
+            count
+          )
+        `)
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
 
       if (matchesError) throw matchesError;
 
-      // Then, process each match to include players and creator info
       const matchesWithDetails = await Promise.all(
         matchesData.map(async (match) => {
-          // Get creator's profile
           const { data: creatorProfile } = await supabase
             .from('profiles')
             .select('name, nickname')
             .eq('id', match.created_by)
             .single();
 
-          // Get players for this match
           const { data: playersData, error: playersError } = await supabase
             .from('match_players')
             .select(`
@@ -63,9 +64,6 @@ export const useMatches = () => {
             avatar: player.profiles.avatar_url,
           }));
 
-          // Calculate available slots
-          const availableSlots = match.max_players - players.length;
-
           return {
             id: match.id,
             title: match.title,
@@ -78,7 +76,7 @@ export const useMatches = () => {
             fee: match.fee,
             createdBy: match.created_by,
             createdByName: creatorProfile?.nickname || creatorProfile?.name || 'Anonymous',
-            availableSlots
+            availableSlots: match.available_slots
           };
         })
       );

@@ -6,31 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-interface Player {
-  id: string;
-  name: string;
-  avatar?: string;
-}
-
-interface MatchCardProps {
-  title: string;
-  location: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  players: Player[];
-  maxPlayers: number;
-  fee: number;
-  onJoin: () => void;
-  onLeave: () => void;
-  onDelete: () => void;
-  hasJoined: boolean;
-  isAuthenticated: boolean;
-  isOwner: boolean;
-  createdBy: string;
-  availableSlots: number;
-}
-
 export const MatchCard = ({ 
   title, 
   location, 
@@ -49,8 +24,6 @@ export const MatchCard = ({
   createdBy,
   availableSlots
 }: MatchCardProps) => {
-  const isFull = availableSlots <= 0;
-
   return (
     <Card className="w-full animate-fade-in hover:shadow-lg transition-shadow">
       <CardContent className="pt-6">
@@ -106,7 +79,7 @@ export const MatchCard = ({
           </div>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            <span>{players.length}/{maxPlayers} players</span>
+            <span>{maxPlayers - availableSlots}/{maxPlayers} players</span>
           </div>
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4" />
@@ -133,7 +106,7 @@ export const MatchCard = ({
       </CardContent>
       <CardFooter className="flex justify-between items-center">
         <Badge variant="secondary">
-          {isFull ? "Match Full" : `${availableSlots} spots left`}
+          {availableSlots <= 0 ? "Match Full" : `${availableSlots} spots left`}
         </Badge>
         {hasJoined ? (
           <Button 
@@ -145,10 +118,10 @@ export const MatchCard = ({
         ) : (
           <Button 
             onClick={onJoin} 
-            disabled={isFull || !isAuthenticated}
+            disabled={availableSlots <= 0 || !isAuthenticated}
             className="bg-primary hover:bg-primary/90 disabled:opacity-50"
           >
-            {!isAuthenticated ? "Login to Join" : isFull ? "Match Full" : "Join Match"}
+            {!isAuthenticated ? "Login to Join" : availableSlots <= 0 ? "Match Full" : "Join Match"}
           </Button>
         )}
       </CardFooter>
