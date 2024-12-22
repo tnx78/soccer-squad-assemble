@@ -47,16 +47,15 @@ export const MatchCard = ({
   isOwner,
   createdBy
 }: MatchCardProps) => {
-  const availableSlots = maxPlayers - players.length;
-  const isFull = availableSlots <= 0;
+  const isFull = players.length >= maxPlayers;
 
   return (
     <Card className="w-full animate-fade-in hover:shadow-lg transition-shadow">
       <CardContent className="pt-6">
         <div className="flex justify-between items-start">
-          <div>
-            <h3 className="font-semibold text-lg mb-1">{title}</h3>
-            <span className="text-sm text-gray-500">(by {createdBy})</span>
+          <div className="flex items-baseline gap-2">
+            <h3 className="font-semibold text-lg">{title}</h3>
+            <span className="text-sm text-gray-500">by {createdBy}</span>
           </div>
           {isOwner && (
             <AlertDialog>
@@ -130,10 +129,7 @@ export const MatchCard = ({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between items-center">
-        <Badge variant="secondary">
-          {isFull ? "Match Full" : `${availableSlots} spots left`}
-        </Badge>
+      <CardFooter className="flex justify-end">
         {hasJoined ? (
           <Button 
             onClick={onLeave}
