@@ -21,9 +21,16 @@ export const useMatches = () => {
 
   const fetchMatches = async () => {
     try {
+      // Fetch matches with creator profiles
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
-        .select('*')
+        .select(`
+          *,
+          profiles!matches_created_by_fkey (
+            name,
+            nickname
+          )
+        `)
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
 
@@ -64,6 +71,7 @@ export const useMatches = () => {
             maxPlayers: match.max_players,
             fee: match.fee,
             createdBy: match.created_by,
+            createdByName: match.profiles?.nickname || match.profiles?.name || 'Anonymous'
           };
         })
       );

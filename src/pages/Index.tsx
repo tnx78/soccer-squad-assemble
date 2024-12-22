@@ -26,8 +26,9 @@ const Index = () => {
     const formattedEndTime = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
 
     try {
+      const title = generateTitle(data.date, data.hours);
       const { error } = await supabase.from('matches').insert({
-        title: data.title,
+        title,
         location: data.location,
         date: data.date,
         start_time: startTime,
@@ -103,6 +104,19 @@ const Index = () => {
       </div>
     </div>
   );
+};
+
+const generateTitle = (date: string, hours: string) => {
+  const dateObj = new Date(date);
+  const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+  const hour = parseInt(hours);
+  
+  let timeOfDay;
+  if (hour < 12) timeOfDay = "Morning";
+  else if (hour < 17) timeOfDay = "Afternoon";
+  else timeOfDay = "Evening";
+  
+  return `${dayName} ${timeOfDay} Game`;
 };
 
 export default Index;
