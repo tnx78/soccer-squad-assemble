@@ -18,6 +18,7 @@ export interface Match {
   fee: number;
   createdBy: string;
   createdByName: string;
+  availableSlots: number;
 }
 
 interface MatchListProps {
@@ -57,6 +58,7 @@ export const MatchList = ({
           isAuthenticated={isAuthenticated}
           isOwner={currentUserId === match.createdBy}
           createdBy={match.createdByName}
+          availableSlots={match.availableSlots}
         />
       ))}
     </div>
