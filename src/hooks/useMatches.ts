@@ -63,6 +63,9 @@ export const useMatches = () => {
             avatar: player.profiles.avatar_url,
           }));
 
+          // Calculate available slots
+          const availableSlots = match.max_players - players.length;
+
           return {
             id: match.id,
             title: match.title,
@@ -74,7 +77,8 @@ export const useMatches = () => {
             maxPlayers: match.max_players,
             fee: match.fee,
             createdBy: match.created_by,
-            createdByName: creatorProfile?.nickname || creatorProfile?.name || 'Anonymous'
+            createdByName: creatorProfile?.nickname || creatorProfile?.name || 'Anonymous',
+            availableSlots
           };
         })
       );
