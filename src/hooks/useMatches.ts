@@ -21,23 +21,26 @@ export const useMatches = () => {
 
   const fetchMatches = async () => {
     try {
-      // Fetch matches with creator profiles
+      // First, fetch all matches
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
-        .select(`
-          *,
-          profiles!matches_created_by_fkey (
-            name,
-            nickname
-          )
-        `)
+        .select('*')
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
 
       if (matchesError) throw matchesError;
 
-      const matchesWithPlayers = await Promise.all(
+      // Then, process each match to include players and creator info
+      const matchesWithDetails = await Promise.all(
         matchesData.map(async (match) => {
+          // Get creator's profile
+          const { data: creatorProfile } = await supabase
+            .from('profiles')
+            .select('name, nickname')
+            .eq('id', match.created_by)
+            .single();
+
+          // Get players for this match
           const { data: playersData, error: playersError } = await supabase
             .from('match_players')
             .select(`
@@ -71,12 +74,12 @@ export const useMatches = () => {
             maxPlayers: match.max_players,
             fee: match.fee,
             createdBy: match.created_by,
-            createdByName: match.profiles?.nickname || match.profiles?.name || 'Anonymous'
+            createdByName: creatorProfile?.nickname || creatorProfile?.name || 'Anonymous'
           };
         })
       );
 
-      setMatches(matchesWithPlayers);
+      setMatches(matchesWithDetails);
     } catch (error) {
       console.error('Error fetching matches:', error);
       toast({
