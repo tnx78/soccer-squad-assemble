@@ -6,6 +6,31 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
+interface Player {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
+interface MatchCardProps {
+  title: string;
+  location: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  players: Player[];
+  maxPlayers: number;
+  fee: number;
+  onJoin: () => void;
+  onLeave: () => void;
+  onDelete: () => void;
+  hasJoined: boolean;
+  isAuthenticated: boolean;
+  isOwner: boolean;
+  createdBy: string;
+  availableSlots: number;
+}
+
 export const MatchCard = ({ 
   title, 
   location, 
