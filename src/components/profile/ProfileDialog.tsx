@@ -9,7 +9,7 @@ import { z } from "zod";
 import { User } from "@supabase/supabase-js";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "./ProfileAvatar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const skillLevels = [1, 2, 3, 4, 5] as const;
 type SkillLevel = typeof skillLevels[number];
@@ -37,13 +37,26 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: profile?.name || "",
-      nickname: profile?.nickname || "",
-      skill_level: profile?.skill_level || 3,
-      phone: profile?.phone || "",
-      email: profile?.email || user?.email || "",
+      name: "",
+      nickname: "",
+      skill_level: 3,
+      phone: "",
+      email: user?.email || "",
     },
   });
+
+  // Update form when profile data changes
+  useEffect(() => {
+    if (profile) {
+      form.reset({
+        name: profile.name || "",
+        nickname: profile.nickname || "",
+        skill_level: profile.skill_level || 3,
+        phone: profile.phone || "",
+        email: profile.email || user?.email || "",
+      });
+    }
+  }, [profile, user, form]);
 
   const onSubmit = async (data: ProfileForm) => {
     await updateProfile(data);
@@ -78,52 +91,60 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter your name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="nickname"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nickname (optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter your nickname" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormLabel className="w-20">Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your name" {...field} />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="nickname"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormLabel className="w-20">Nickname</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nickname" {...field} />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="skill_level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Skill Level</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your skill level" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {skillLevels.map((level) => (
-                        <SelectItem key={level} value={level.toString()}>
-                          {level} {level === 1 ? '(Beginner)' : level === 5 ? '(Expert)' : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <FormLabel className="w-20">Skill Level</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select skill level" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {skillLevels.map((level) => (
+                          <SelectItem key={level} value={level.toString()}>
+                            {level} {level === 1 ? '(Beginner)' : level === 5 ? '(Expert)' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -133,10 +154,12 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number (optional)</FormLabel>
-                  <FormControl>
-                    <Input type="tel" placeholder="Enter your phone number" {...field} />
-                  </FormControl>
+                  <div className="flex items-center gap-2">
+                    <FormLabel className="w-20">Phone</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="Phone number" {...field} />
+                    </FormControl>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -146,10 +169,12 @@ export const ProfileDialog = ({ user, children, onProfileUpdate }: ProfileDialog
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" disabled value={user?.email || ''} />
-                  </FormControl>
+                  <div className="flex items-center gap-2">
+                    <FormLabel className="w-20">Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" disabled value={user?.email || ''} />
+                    </FormControl>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

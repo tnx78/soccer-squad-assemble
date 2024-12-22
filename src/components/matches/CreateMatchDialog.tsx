@@ -14,6 +14,7 @@ export interface CreateMatchForm {
   minutes: string;
   duration: string;
   maxPlayers: string;
+  availableSlots: string;
   fee: string;
 }
 
@@ -31,9 +32,13 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
   const minDate = tomorrow.toISOString().split('T')[0];
 
   const maxPlayers = watch('maxPlayers');
-  const availableSlots = maxPlayers ? parseInt(maxPlayers) : 0;
+  const availableSlots = watch('availableSlots');
 
   const onSubmit = async (data: CreateMatchForm) => {
+    if (parseInt(data.availableSlots) > parseInt(data.maxPlayers)) {
+      alert("Available slots cannot be greater than maximum players");
+      return;
+    }
     await onCreateMatch(data);
     setOpen(false);
     reset();
@@ -52,16 +57,19 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
           <DialogTitle>Create a New Match</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" {...register("title", { required: true })} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="title" className="w-20">Title</Label>
+              <Input id="title" {...register("title", { required: true })} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="location" className="w-20">Location</Label>
+              <Input id="location" {...register("location", { required: true })} />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="location">Location</Label>
-            <Input id="location" {...register("location", { required: true })} />
-          </div>
-          <div>
-            <Label htmlFor="date">Date</Label>
+          
+          <div className="flex items-center gap-2">
+            <Label htmlFor="date" className="w-20">Date</Label>
             <Input 
               id="date" 
               type="date" 
@@ -69,9 +77,10 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
               {...register("date", { required: true })} 
             />
           </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="hours">Start Time (Hours)</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="hours" className="w-20">Hours</Label>
               <select 
                 id="hours" 
                 className="w-full border rounded-md h-10 px-3"
@@ -84,8 +93,8 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
                 ))}
               </select>
             </div>
-            <div>
-              <Label htmlFor="minutes">Minutes</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="minutes" className="w-20">Minutes</Label>
               <select 
                 id="minutes" 
                 className="w-full border rounded-md h-10 px-3"
@@ -99,8 +108,9 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
               </select>
             </div>
           </div>
-          <div>
-            <Label htmlFor="duration">Duration (minutes)</Label>
+
+          <div className="flex items-center gap-2">
+            <Label htmlFor="duration" className="w-20">Duration</Label>
             <select 
               id="duration" 
               className="w-full border rounded-md h-10 px-3"
@@ -113,28 +123,41 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
               ))}
             </select>
           </div>
-          <div>
-            <Label htmlFor="maxPlayers">Maximum Players</Label>
-            <Input 
-              id="maxPlayers" 
-              type="number" 
-              {...register("maxPlayers", { required: true, min: 2 })} 
-            />
-          </div>
-          <div>
-            <Label>Available Slots</Label>
-            <div className="text-sm text-gray-600 mt-1">
-              {availableSlots} players can join this match
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="maxPlayers" className="w-20">Max Players</Label>
+              <Input 
+                id="maxPlayers" 
+                type="number" 
+                {...register("maxPlayers", { required: true, min: 2 })} 
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="availableSlots" className="w-20">Available</Label>
+              <Input 
+                id="availableSlots" 
+                type="number"
+                {...register("availableSlots", { 
+                  required: true,
+                  min: 0,
+                  validate: (value) => 
+                    parseInt(value) <= parseInt(maxPlayers) || 
+                    "Available slots must be less than max players"
+                })} 
+              />
             </div>
           </div>
-          <div>
-            <Label htmlFor="fee">Fee (HUF)</Label>
+
+          <div className="flex items-center gap-2">
+            <Label htmlFor="fee" className="w-20">Fee (HUF)</Label>
             <Input 
               id="fee" 
               type="number" 
               {...register("fee", { required: true, min: 0 })} 
             />
           </div>
+
           <Button type="submit" disabled={isSubmitting} className="w-full">
             Create Match
           </Button>
