@@ -76,8 +76,8 @@ export const useMatches = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message === "new row violates row-level security policy for table \"match_players\"" 
-          ? "This match is full or you're already joined"
+        description: error.message === "You have already joined this match" 
+          ? error.message 
           : "Failed to join match",
         variant: "destructive",
       });
