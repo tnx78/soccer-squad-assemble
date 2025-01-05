@@ -35,7 +35,8 @@ const Index = () => {
         end_time: formattedEndTime,
         max_players: parseInt(data.maxPlayers),
         fee: parseInt(data.fee),
-        created_by: user.id
+        created_by: user.id,
+        available_slots: parseInt(data.availableSlots)
       });
 
       if (error) throw error;
