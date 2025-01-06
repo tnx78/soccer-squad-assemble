@@ -44,6 +44,7 @@ export type Database = {
       }
       matches: {
         Row: {
+          available_slots: number
           created_at: string
           created_by: string
           date: string
@@ -56,6 +57,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          available_slots?: number
           created_at?: string
           created_by: string
           date: string
@@ -68,6 +70,7 @@ export type Database = {
           title: string
         }
         Update: {
+          available_slots?: number
           created_at?: string
           created_by?: string
           date?: string
