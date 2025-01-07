@@ -13,7 +13,6 @@ export interface CreateMatchForm {
   minutes: string;
   duration: string;
   maxPlayers: string;
-  availableSlots: string;
   fee: string;
 }
 
@@ -36,21 +35,14 @@ interface CreateMatchDialogProps {
 
 export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { register, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm<CreateMatchForm>();
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateMatchForm>();
 
   // Get tomorrow's date in YYYY-MM-DD format
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
 
-  const maxPlayers = watch('maxPlayers');
-  const availableSlots = watch('availableSlots');
-
   const onSubmit = async (data: CreateMatchForm) => {
-    if (parseInt(data.availableSlots) > parseInt(data.maxPlayers)) {
-      alert("Available slots cannot be greater than maximum players");
-      return;
-    }
     await onCreateMatch(data);
     setOpen(false);
     reset();
@@ -130,29 +122,13 @@ export const CreateMatchDialog = ({ onCreateMatch }: CreateMatchDialogProps) => 
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="maxPlayers" className="w-20">Max Players</Label>
-              <Input 
-                id="maxPlayers" 
-                type="number" 
-                {...register("maxPlayers", { required: true, min: 2 })} 
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="availableSlots" className="w-20">Available</Label>
-              <Input 
-                id="availableSlots" 
-                type="number"
-                {...register("availableSlots", { 
-                  required: true,
-                  min: 0,
-                  validate: (value) => 
-                    parseInt(value) <= parseInt(maxPlayers) || 
-                    "Available slots must be less than max players"
-                })} 
-              />
-            </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="maxPlayers" className="w-20">Max Players</Label>
+            <Input 
+              id="maxPlayers" 
+              type="number" 
+              {...register("maxPlayers", { required: true, min: 2 })} 
+            />
           </div>
 
           <div className="flex items-center gap-2">

@@ -27,16 +27,18 @@ const Index = () => {
 
     try {
       const title = generateTitle(data.date, data.hours);
+      const maxPlayers = parseInt(data.maxPlayers);
+      
       const { error } = await supabase.from('matches').insert({
         title,
         location: data.location,
         date: data.date,
         start_time: startTime,
         end_time: formattedEndTime,
-        max_players: parseInt(data.maxPlayers),
+        max_players: maxPlayers,
         fee: parseInt(data.fee),
         created_by: user.id,
-        available_slots: parseInt(data.availableSlots)
+        available_slots: maxPlayers - 1 // Subtract 1 for the creator who automatically joins
       });
 
       if (error) throw error;
